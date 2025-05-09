@@ -4,10 +4,9 @@ const db = mysql.createConnection({
     host: 'localhost',
     user: 'root',
     password: 'rs@2113',
-    database: 'real_estate_db'
+    database: 'real_estate_project'
   });
   
-
 db.connect((err) => {
   if (err) {
     console.error('MySQL connection failed:', err);

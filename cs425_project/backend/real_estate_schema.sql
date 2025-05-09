@@ -1,6 +1,9 @@
-CREATE TABLE Users(  
+CREATE TABLE Users( 
+    name VARCHAR(100) NOT NULL,
     email VARCHAR(100) NOT NULL, 
     address VARCHAR(200) NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    user_type VARCHAR (50) NOT NULL, 
     PRIMARY KEY (email)
 );
 
@@ -34,7 +37,7 @@ CREATE TABLE neighborhood(
 CREATE TABLE Renter(  
     renter_details INT NOT NULL,  
     preferred_location VARCHAR(100) NOT NULL,  
-    reward_points INT NOT NULL,  
+    reward_points INT,  
     email VARCHAR(100) NOT NULL,  
     PRIMARY KEY (email),  
     FOREIGN KEY (email) REFERENCES Users(email));

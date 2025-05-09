@@ -6,7 +6,7 @@ import 'package:real_estate_app/theme/theme.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 
 class Realestatelanding extends StatefulWidget {
-  Realestatelanding({super.key});
+  const Realestatelanding({super.key});
 
   @override
   State<Realestatelanding> createState() => _RealestatelandingState();
@@ -225,7 +225,7 @@ class _RealestatelandingState extends State<Realestatelanding> {
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'email': emailController.text,
-          'password_hash': passwordController.text,
+          'password_hash': passwordcontroller.text,
         }),
       );
 
@@ -255,22 +255,23 @@ class _RealestatelandingState extends State<Realestatelanding> {
     }
   }
 
-  final creditCardNameController = TextEditingController();
-  final creditCardNumberController = TextEditingController();
-  final creditCardCVVController = TextEditingController();
-  final passwordController = TextEditingController();
-  String selectedMonth = '01';
-  String selectedYear = DateTime.now().year.toString();
-  String userType = 'Agent';
-  final nameController = TextEditingController();
+  final namecontroller = TextEditingController();
   final emailController = TextEditingController();
   final addressController = TextEditingController();
   final jobTitleController = TextEditingController();
   final agencyController = TextEditingController();
   final contactController = TextEditingController();
-  final moveInDateController = TextEditingController();
   final locationController = TextEditingController();
-  final budgetController = TextEditingController();
+  final rewardPointsController = TextEditingController();
+  final passwordcontroller = TextEditingController();
+  final creditCardNameController = TextEditingController();
+  final creditCardNumberController = TextEditingController();
+  final creditCardCVVController = TextEditingController();
+  final creditCardBillingController = TextEditingController();
+
+  String selectedMonth = '01';
+  String selectedYear = DateTime.now().year.toString();
+  String userType = 'Renter';
 
   void _showSignUpDialog(BuildContext context) {
     MediaQueryData mediaQueryData = MediaQuery.of(context);
@@ -317,8 +318,14 @@ class _RealestatelandingState extends State<Realestatelanding> {
                       const SizedBox(height: 16),
                       TextField(
                         style: TextStyle(color: Colors.white),
-                        controller: nameController,
-                        decoration: _inputDecoration('Full Name'),
+                        controller: namecontroller,
+                        decoration: _inputDecoration('name'),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        style: TextStyle(color: Colors.white),
+                        controller: emailController,
+                        decoration: _inputDecoration('Email'),
                       ),
                       const SizedBox(height: 12),
                       TextField(
@@ -330,22 +337,30 @@ class _RealestatelandingState extends State<Realestatelanding> {
                       const SizedBox(height: 12),
                       TextField(
                         style: TextStyle(color: Colors.white),
-                        controller: emailController,
-                        decoration: _inputDecoration('Email'),
+                        controller: passwordcontroller,
+                        obscureText: true,
+                        decoration: InputDecoration(
+                          hintText: "Password",
+                          hintStyle: TextStyle(color: Colors.white70),
+                          filled: true,
+                          fillColor: Colors.black.withOpacity(0.6),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: Colors.orangeAccent),
+                          ),
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 10,
+                          ),
+                        ),
                       ),
                       const SizedBox(height: 12),
-                      TextField(
-                        controller: passwordController,
-                        obscureText: true,
-                        decoration: _inputDecoration('Password'),
-                      ),
-                      SizedBox(height: 12),
                       DropdownButtonFormField<String>(
                         value: userType,
                         dropdownColor: Colors.grey[900],
                         decoration: _inputDecoration('I am a'),
                         items:
-                            ['Agent', 'Prospective Renter'].map((type) {
+                            ['Agent', 'Renter'].map((type) {
                               return DropdownMenuItem(
                                 value: type,
                                 child: Text(
@@ -357,6 +372,8 @@ class _RealestatelandingState extends State<Realestatelanding> {
                         onChanged: (value) => setState(() => userType = value!),
                       ),
                       const SizedBox(height: 12),
+
+                      // Agent Fields
                       if (userType == 'Agent') ...[
                         TextField(
                           style: TextStyle(color: Colors.white),
@@ -373,25 +390,15 @@ class _RealestatelandingState extends State<Realestatelanding> {
                         TextField(
                           style: TextStyle(color: Colors.white),
                           controller: contactController,
-                          decoration: _inputDecoration('Contact Info'),
+                          decoration: _inputDecoration('Phone Number'),
                         ),
-                      ] else ...[
-                        TextField(
-                          style: TextStyle(color: Colors.white),
-                          controller: moveInDateController,
-                          decoration: _inputDecoration('Desired Move-in Date'),
-                        ),
-                        const SizedBox(height: 12),
+                      ]
+                      // Renter (User) Fields
+                      else ...[
                         TextField(
                           style: TextStyle(color: Colors.white),
                           controller: locationController,
                           decoration: _inputDecoration('Preferred Location'),
-                        ),
-                        const SizedBox(height: 12),
-                        TextField(
-                          style: TextStyle(color: Colors.white),
-                          controller: budgetController,
-                          decoration: _inputDecoration('Budget'),
                         ),
                         const SizedBox(height: 12),
                         TextField(
@@ -409,85 +416,79 @@ class _RealestatelandingState extends State<Realestatelanding> {
                           decoration: _inputDecoration('Card Number'),
                         ),
                         SizedBox(height: 12),
+                        TextField(
+                          controller: creditCardCVVController,
+                          keyboardType: TextInputType.number,
+                          obscureText: true,
+                          style: TextStyle(color: Colors.white),
+                          cursorColor: Colors.orangeAccent,
+                          decoration: _inputDecoration('CVV'),
+                        ),
+                        SizedBox(height: 12),
+                        TextField(
+                          controller: creditCardBillingController,
+                          style: TextStyle(color: Colors.white),
+                          cursorColor: Colors.orangeAccent,
+                          decoration: _inputDecoration('Billing Address'),
+                        ),
+                        const SizedBox(height: 12),
                         Row(
                           children: [
                             Expanded(
-                              child: TextField(
-                                controller: creditCardCVVController,
-                                keyboardType: TextInputType.number,
-                                obscureText: true,
-                                style: TextStyle(color: Colors.white),
-                                cursorColor: Colors.orangeAccent,
-                                decoration: _inputDecoration('CVV'),
+                              child: DropdownButtonFormField<String>(
+                                value: selectedMonth,
+                                dropdownColor: Colors.black87,
+                                decoration: _inputDecoration('MM'),
+                                items:
+                                    List.generate(
+                                      12,
+                                      (index) => (index + 1).toString().padLeft(
+                                        2,
+                                        '0',
+                                      ),
+                                    ).map((month) {
+                                      return DropdownMenuItem(
+                                        value: month,
+                                        child: Text(
+                                          month,
+                                          style: TextStyle(color: Colors.white),
+                                        ),
+                                      );
+                                    }).toList(),
+                                onChanged:
+                                    (value) =>
+                                        setState(() => selectedMonth = value!),
                               ),
                             ),
-                            SizedBox(width: 12),
+                            SizedBox(width: 6),
                             Expanded(
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    child: DropdownButtonFormField<String>(
-                                      value: selectedMonth,
-                                      dropdownColor: Colors.black87,
-                                      decoration: _inputDecoration('MM'),
-                                      items:
-                                          List.generate(
-                                            12,
-                                            (index) => (index + 1)
-                                                .toString()
-                                                .padLeft(2, '0'),
-                                          ).map((month) {
-                                            return DropdownMenuItem(
-                                              value: month,
-                                              child: Text(
-                                                month,
-                                                style: TextStyle(
-                                                  color: Colors.white,
-                                                ),
-                                              ),
-                                            );
-                                          }).toList(),
-                                      onChanged:
-                                          (value) => setState(
-                                            () => selectedMonth = value!,
-                                          ),
-                                    ),
-                                  ),
-                                  SizedBox(width: 6),
-                                  Expanded(
-                                    child: DropdownButtonFormField<String>(
-                                      value: selectedYear,
-                                      dropdownColor: Colors.black87,
-                                      decoration: _inputDecoration('YYYY'),
-                                      items:
-                                          List.generate(
-                                            10,
-                                            (i) =>
-                                                (DateTime.now().year + i)
-                                                    .toString(),
-                                          ).map((year) {
-                                            return DropdownMenuItem(
-                                              value: year,
-                                              child: Text(
-                                                year,
-                                                style: TextStyle(
-                                                  color: Colors.white,
-                                                ),
-                                              ),
-                                            );
-                                          }).toList(),
-                                      onChanged:
-                                          (value) => setState(
-                                            () => selectedYear = value!,
-                                          ),
-                                    ),
-                                  ),
-                                ],
+                              child: DropdownButtonFormField<String>(
+                                value: selectedYear,
+                                dropdownColor: Colors.black87,
+                                decoration: _inputDecoration('YYYY'),
+                                items:
+                                    List.generate(
+                                      10,
+                                      (i) =>
+                                          (DateTime.now().year + i).toString(),
+                                    ).map((year) {
+                                      return DropdownMenuItem(
+                                        value: year,
+                                        child: Text(
+                                          year,
+                                          style: TextStyle(color: Colors.white),
+                                        ),
+                                      );
+                                    }).toList(),
+                                onChanged:
+                                    (value) =>
+                                        setState(() => selectedYear = value!),
                               ),
                             ),
                           ],
                         ),
                       ],
+
                       const SizedBox(height: 20),
                       pressed
                           ? ElevatedButton(
@@ -495,9 +496,7 @@ class _RealestatelandingState extends State<Realestatelanding> {
                               backgroundColor: Colors.orangeAccent,
                             ),
                             onPressed: () {
-                              setState(() {
-                                pressed = false;
-                              });
+                              setState(() => pressed = false);
                               Timer(Duration(milliseconds: 2000), () {
                                 signup(context);
                                 Navigator.pop(context);
@@ -535,40 +534,55 @@ class _RealestatelandingState extends State<Realestatelanding> {
   Future<void> signup(BuildContext context) async {
     final url = Uri.parse('http://localhost:3000/api/signup');
 
-    final response = await http.post(
-      url,
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'name': nameController.text,
-        'email': emailController.text,
-        'address': addressController.text,
-        'password_hash': passwordController.text,
-        'user_type': userType,
-        'job_title': jobTitleController.text,
-        'agency': agencyController.text,
-        'contact_info': contactController.text,
-        'move_in_date': moveInDateController.text,
-        'preferred_location': locationController.text,
-        'budget': int.tryParse(budgetController.text) ?? 0,
-        'credit_card_name': creditCardNameController.text,
-        'credit_card_number': creditCardNumberController.text,
-        'credit_card_cvv': creditCardCVVController.text,
-        'credit_card_exp_month': selectedMonth,
-        'credit_card_exp_year': selectedYear,
-      }),
-    );
+    final expiryDate = '$selectedYear-$selectedMonth-01';
 
-    if (response.statusCode == 200) {
+    final Map<String, dynamic> payload = {
+      'name': namecontroller.text.trim(),
+      'email': emailController.text.trim(),
+      'address': addressController.text.trim(),
+      'password_hash': passwordcontroller.text.trim(),
+      'user_type': userType,
+      'contact_info': contactController.text.trim(),
+      'credit_card_number': creditCardNumberController.text.trim(),
+      'credit_card_cvv': creditCardCVVController.text.trim(),
+      'credit_card_billing_address': creditCardBillingController.text.trim(),
+      'credit_card_expiry': expiryDate,
+    };
+
+    if (userType == 'Agent') {
+      payload.addAll({
+        'job_title': jobTitleController.text.trim(),
+        'agency': agencyController.text.trim(),
+      });
+    } else {
+      payload.addAll({'preferred_location': locationController.text.trim()});
+    }
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(payload),
+      );
+
+      if (response.statusCode == 200) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Sign up successful!')));
+        Navigator.pop(context);
+        _showLoginDialog(context);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Signup failed: ${response.body}')),
+        );
+        print('Status Code: ${response.statusCode}');
+        print('Response Body: ${response.body}');
+      }
+    } catch (e) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Sign up successful!')));
-      Navigator.pop(context); // or _showLoginDialog();
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Signup failed: ${response.body}')),
-      );
-      print('Status Code: ${response.statusCode}');
-      print('Response Body: ${response.body}');
+      ).showSnackBar(SnackBar(content: Text('Error occurred: $e')));
+      print('Exception: $e');
     }
   }
 
