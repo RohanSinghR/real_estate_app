@@ -106,6 +106,8 @@ CREATE INDEX idx_credit_email ON Credit_Card(email);
 CREATE INDEX idx_address_card_number ON Address(card_number);
 CREATE INDEX idx_renter_location ON Renter(preferred_location);
 CREATE INDEX idx_property_neighborhood ON property(neighborhood_id);
+CREATE INDEX idx_property_city ON property(city);
+CREATE INDEX idx_property_state ON property(state);
 CREATE INDEX idx_property_email ON property(email);
 CREATE INDEX idx_booking_email ON Booking(email);
 CREATE INDEX idx_booking_card_number ON Booking(card_number);
