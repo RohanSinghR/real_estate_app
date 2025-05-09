@@ -25,6 +25,12 @@ CREATE TABLE Address(
     FOREIGN KEY (card_number) REFERENCES Credit_Card(card_number) on delete cascade
 );
 
+CREATE TABLE neighborhood(  
+    neighborhood_id INT NOT NULL,  
+    crime_rate INT NOT NULL, 
+    nearby_schools INT NOT NULL,  
+    PRIMARY KEY (neighborhood_id)
+);
 CREATE TABLE Renter(  
     renter_details INT NOT NULL,  
     preferred_location VARCHAR(100) NOT NULL,  
@@ -32,6 +38,15 @@ CREATE TABLE Renter(
     email VARCHAR(100) NOT NULL,  
     PRIMARY KEY (email),  
     FOREIGN KEY (email) REFERENCES Users(email));
+
+CREATE TABLE Agent(  
+    phone_num INT NOT NULL,  
+    Job_role VARCHAR(100) NOT NULL,  
+    Agency VARCHAR(100) NOT NULL,  
+    email VARCHAR(100) NOT NULL,  
+    PRIMARY KEY (email),  
+    FOREIGN KEY (email) REFERENCES Users(email)
+);
 
 CREATE TABLE property(  
     price INT NOT NULL,  
@@ -105,9 +120,17 @@ CREATE INDEX idx_users_email ON Users(email);
 CREATE INDEX idx_credit_email ON Credit_Card(email);
 CREATE INDEX idx_address_card_number ON Address(card_number);
 CREATE INDEX idx_renter_location ON Renter(preferred_location);
+CREATE INDEX idx_agent_agency ON Agent(Agency);
+CREATE INDEX idx_agent_job_role ON Agent(Job_role);
+CREATE INDEX idx_agent_phone_num ON Agent(phone_num);
 CREATE INDEX idx_property_neighborhood ON property(neighborhood_id);
 CREATE INDEX idx_property_city ON property(city);
 CREATE INDEX idx_property_state ON property(state);
 CREATE INDEX idx_property_email ON property(email);
+CREATE INDEX idx_property_availability ON property(availability);
+CREATE INDEX idx_booking_date ON Booking(date);
+CREATE INDEX idx_renter_reward_points ON Renter(reward_points);
+CREATE INDEX idx_neighborhood_crime_rate ON neighborhood(crime_rate);
+CREATE INDEX idx_property_type ON property(type);
 CREATE INDEX idx_booking_email ON Booking(email);
 CREATE INDEX idx_booking_card_number ON Booking(card_number);

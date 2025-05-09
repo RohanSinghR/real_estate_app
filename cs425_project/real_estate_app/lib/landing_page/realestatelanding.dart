@@ -787,19 +787,6 @@ class _RealestatelandingState extends State<Realestatelanding> {
                             textAlign: TextAlign.center,
                           ),
                           const SizedBox(height: 16),
-                          Text(
-                            'At Homify, we are passionate about connecting people with their dream homes. '
-                            'With a curated portfolio of stunning properties, cutting-edge virtual tours, and expert local agents, '
-                            'we redefine the real estate experience. Whether you’re buying, selling, or investing — we make it seamless, personal, and rewarding.',
-                            style: Theme.of(
-                              context,
-                            ).textTheme.bodySmall?.copyWith(
-                              color: Colors.white70,
-                              height: 1.6,
-                              fontSize: 16,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
                           const SizedBox(height: 24),
                           Wrap(
                             spacing: 16,
