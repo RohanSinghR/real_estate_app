@@ -37,7 +37,7 @@ CREATE TABLE Renter(
     reward_points INT NOT NULL,  
     email VARCHAR(100) NOT NULL,  
     PRIMARY KEY (email),  
-    FOREIGN KEY (email) REFERENCES Users(email));
+    FOREIGN KEY (email) REFERENCES Users(email)on delete cascade);
 
 CREATE TABLE Agent(  
     phone_num INT NOT NULL,  
@@ -45,13 +45,13 @@ CREATE TABLE Agent(
     Agency VARCHAR(100) NOT NULL,  
     email VARCHAR(100) NOT NULL,  
     PRIMARY KEY (email),  
-    FOREIGN KEY (email) REFERENCES Users(email)
+    FOREIGN KEY (email) REFERENCES Users(email)  on delete cascade
 );
 
 CREATE TABLE property(  
     price INT NOT NULL,  
     property_id INT NOT NULL,  
-    type INT NOT NULL,  
+    type VARCHAR(15) CHECK (type in ('House','Property','Commercial_buildings','Vaction_homes','Land')),  
     availability DATE NOT NULL,  
     description VARCHAR(500) NOT NULL,  
     city VARCHAR(100) NOT NULL,  
@@ -59,8 +59,8 @@ CREATE TABLE property(
     neighborhood_id INT NOT NULL,  
     email VARCHAR(100) NOT NULL,  
     PRIMARY KEY (property_id),  
-    FOREIGN KEY (neighborhood_id) REFERENCES neighborhood(neighborhood_id),  
-    FOREIGN KEY (email) REFERENCES Agent(email)
+    FOREIGN KEY (neighborhood_id) REFERENCES neighborhood(neighborhood_id)on delete cascade,  
+    FOREIGN KEY (email) REFERENCES Agent(email)on delete cascade
 );
 
 CREATE TABLE House(  
@@ -68,7 +68,7 @@ CREATE TABLE House(
     square_footage INT NOT NULL,  
     property_id INT NOT NULL,  
     PRIMARY KEY (property_id),  
-    FOREIGN KEY (property_id) REFERENCES property(property_id)
+    FOREIGN KEY (property_id) REFERENCES property(property_id)on delete cascade
 );
 
 CREATE TABLE Commercial_buildings(  
@@ -76,7 +76,7 @@ CREATE TABLE Commercial_buildings(
     type_of_business VARCHAR(100) NOT NULL,  
     property_id INT NOT NULL,  
     PRIMARY KEY (property_id),  
-    FOREIGN KEY (property_id) REFERENCES property(property_id)
+    FOREIGN KEY (property_id) REFERENCES property(property_id)on delete cascade
 );
 
 CREATE TABLE Vacation_homes(  
@@ -84,14 +84,14 @@ CREATE TABLE Vacation_homes(
     square_footage INT NOT NULL, 
     property_id INT NOT NULL,  
     PRIMARY KEY (property_id),  
-    FOREIGN KEY (property_id) REFERENCES property(property_id)
+    FOREIGN KEY (property_id) REFERENCES property(property_id)on delete cascade
 );
 
 CREATE TABLE Land(  
     area INT NOT NULL,  
     property_id INT NOT NULL,  
     PRIMARY KEY (property_id),  
-    FOREIGN KEY (property_id) REFERENCES property(property_id)
+    FOREIGN KEY (property_id) REFERENCES property(property_id)on delete cascade
 );
 
 CREATE TABLE Apartment(  
@@ -100,7 +100,7 @@ CREATE TABLE Apartment(
     building_type VARCHAR(100) NOT NULL,  
     property_id INT NOT NULL,  
     PRIMARY KEY (property_id),  
-    FOREIGN KEY (property_id) REFERENCES property(property_id)
+    FOREIGN KEY (property_id) REFERENCES property(property_id)on delete cascade
 );
 
 CREATE TABLE Booking(  
@@ -113,7 +113,7 @@ CREATE TABLE Booking(
     PRIMARY KEY (booking_id),  
     FOREIGN KEY (property_id) REFERENCES property(property_id),  
     FOREIGN KEY (email) REFERENCES Renter(email),  
-    FOREIGN KEY (card_number) REFERENCES Credit_Card(card_number)
+    FOREIGN KEY (card_number) REFERENCES Credit_Card(card_number)on delete cascade
 );
 
 CREATE INDEX idx_users_email ON Users(email);
