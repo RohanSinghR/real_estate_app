@@ -1,11 +1,20 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:real_estate_app/theme/theme.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 
-class Realestatelanding extends StatelessWidget {
+class Realestatelanding extends StatefulWidget {
   Realestatelanding({super.key});
 
+  @override
+  State<Realestatelanding> createState() => _RealestatelandingState();
+}
+
+class _RealestatelandingState extends State<Realestatelanding> {
+  bool isLoggedIn = false;
+  String loggedInUserName = '';
   Widget btn(String btntext, BuildContext context, VoidCallback fn) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 6.0),
@@ -35,6 +44,7 @@ class Realestatelanding extends StatelessWidget {
   }
 
   bool pressed = true;
+
   Widget _buildAboutStatCard(IconData icon, String title, String subtitle) {
     return Container(
       height: 150,
@@ -185,6 +195,7 @@ class Realestatelanding extends StatelessWidget {
                       ),
                     ),
                     onPressed: () {
+                      login(context);
                       Navigator.of(dialogContext).pop();
                     },
                     child: Text('Login'),
@@ -205,6 +216,62 @@ class Realestatelanding extends StatelessWidget {
     );
   }
 
+  Future<void> login(BuildContext context) async {
+    final url = Uri.parse('http://localhost:3000/api/login');
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'email': emailController.text,
+          'password_hash': passwordController.text,
+        }),
+      );
+
+      print('Login response: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final user = data['user'];
+        setState(() {
+          isLoggedIn = true;
+          loggedInUserName = user['name']; // from API response
+        });
+
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Welcome, ${user['name']}!')));
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Login failed: ${response.body}')),
+        );
+      }
+    } catch (e) {
+      print('Login error: $e');
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Login error: $e')));
+    }
+  }
+
+  final creditCardNameController = TextEditingController();
+  final creditCardNumberController = TextEditingController();
+  final creditCardCVVController = TextEditingController();
+  final passwordController = TextEditingController();
+  String selectedMonth = '01';
+  String selectedYear = DateTime.now().year.toString();
+  String userType = 'Agent';
+  final nameController = TextEditingController();
+  final emailController = TextEditingController();
+  final addressController = TextEditingController();
+  final jobTitleController = TextEditingController();
+  final agencyController = TextEditingController();
+  final contactController = TextEditingController();
+  final moveInDateController = TextEditingController();
+  final locationController = TextEditingController();
+  final budgetController = TextEditingController();
+
   void _showSignUpDialog(BuildContext context) {
     MediaQueryData mediaQueryData = MediaQuery.of(context);
 
@@ -212,17 +279,6 @@ class Realestatelanding extends StatelessWidget {
       context: context,
       builder: (_) {
         pressed = true;
-        String userType = 'Agent';
-        final nameController = TextEditingController();
-        final emailController = TextEditingController();
-        final addressController = TextEditingController();
-        final jobTitleController = TextEditingController();
-        final agencyController = TextEditingController();
-        final contactController = TextEditingController();
-        final moveInDateController = TextEditingController();
-        final locationController = TextEditingController();
-        final budgetController = TextEditingController();
-        final creditCardController = TextEditingController();
 
         return StatefulBuilder(
           builder: (context, setState) {
@@ -234,7 +290,7 @@ class Realestatelanding extends StatelessWidget {
                 borderRadius: BorderRadius.circular(16),
               ),
               content: Container(
-                width: mediaQueryData.size.width * 0.2,
+                width: mediaQueryData.size.width * 0.3,
                 constraints: BoxConstraints(
                   maxHeight: MediaQuery.of(context).size.height * 0.8,
                 ),
@@ -278,6 +334,12 @@ class Realestatelanding extends StatelessWidget {
                         decoration: _inputDecoration('Email'),
                       ),
                       const SizedBox(height: 12),
+                      TextField(
+                        controller: passwordController,
+                        obscureText: true,
+                        decoration: _inputDecoration('Password'),
+                      ),
+                      SizedBox(height: 12),
                       DropdownButtonFormField<String>(
                         value: userType,
                         dropdownColor: Colors.grey[900],
@@ -333,9 +395,97 @@ class Realestatelanding extends StatelessWidget {
                         ),
                         const SizedBox(height: 12),
                         TextField(
+                          controller: creditCardNameController,
                           style: TextStyle(color: Colors.white),
-                          controller: creditCardController,
-                          decoration: _inputDecoration('Credit Card Info'),
+                          cursorColor: Colors.orangeAccent,
+                          decoration: _inputDecoration('Cardholder Name'),
+                        ),
+                        SizedBox(height: 12),
+                        TextField(
+                          controller: creditCardNumberController,
+                          keyboardType: TextInputType.number,
+                          style: TextStyle(color: Colors.white),
+                          cursorColor: Colors.orangeAccent,
+                          decoration: _inputDecoration('Card Number'),
+                        ),
+                        SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                controller: creditCardCVVController,
+                                keyboardType: TextInputType.number,
+                                obscureText: true,
+                                style: TextStyle(color: Colors.white),
+                                cursorColor: Colors.orangeAccent,
+                                decoration: _inputDecoration('CVV'),
+                              ),
+                            ),
+                            SizedBox(width: 12),
+                            Expanded(
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: DropdownButtonFormField<String>(
+                                      value: selectedMonth,
+                                      dropdownColor: Colors.black87,
+                                      decoration: _inputDecoration('MM'),
+                                      items:
+                                          List.generate(
+                                            12,
+                                            (index) => (index + 1)
+                                                .toString()
+                                                .padLeft(2, '0'),
+                                          ).map((month) {
+                                            return DropdownMenuItem(
+                                              value: month,
+                                              child: Text(
+                                                month,
+                                                style: TextStyle(
+                                                  color: Colors.white,
+                                                ),
+                                              ),
+                                            );
+                                          }).toList(),
+                                      onChanged:
+                                          (value) => setState(
+                                            () => selectedMonth = value!,
+                                          ),
+                                    ),
+                                  ),
+                                  SizedBox(width: 6),
+                                  Expanded(
+                                    child: DropdownButtonFormField<String>(
+                                      value: selectedYear,
+                                      dropdownColor: Colors.black87,
+                                      decoration: _inputDecoration('YYYY'),
+                                      items:
+                                          List.generate(
+                                            10,
+                                            (i) =>
+                                                (DateTime.now().year + i)
+                                                    .toString(),
+                                          ).map((year) {
+                                            return DropdownMenuItem(
+                                              value: year,
+                                              child: Text(
+                                                year,
+                                                style: TextStyle(
+                                                  color: Colors.white,
+                                                ),
+                                              ),
+                                            );
+                                          }).toList(),
+                                      onChanged:
+                                          (value) => setState(
+                                            () => selectedYear = value!,
+                                          ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                       const SizedBox(height: 20),
@@ -349,6 +499,7 @@ class Realestatelanding extends StatelessWidget {
                                 pressed = false;
                               });
                               Timer(Duration(milliseconds: 2000), () {
+                                signup(context);
                                 Navigator.pop(context);
                                 _showLoginDialog(context);
                               });
@@ -379,6 +530,46 @@ class Realestatelanding extends StatelessWidget {
         );
       },
     );
+  }
+
+  Future<void> signup(BuildContext context) async {
+    final url = Uri.parse('http://localhost:3000/api/signup');
+
+    final response = await http.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'name': nameController.text,
+        'email': emailController.text,
+        'address': addressController.text,
+        'password_hash': passwordController.text,
+        'user_type': userType,
+        'job_title': jobTitleController.text,
+        'agency': agencyController.text,
+        'contact_info': contactController.text,
+        'move_in_date': moveInDateController.text,
+        'preferred_location': locationController.text,
+        'budget': int.tryParse(budgetController.text) ?? 0,
+        'credit_card_name': creditCardNameController.text,
+        'credit_card_number': creditCardNumberController.text,
+        'credit_card_cvv': creditCardCVVController.text,
+        'credit_card_exp_month': selectedMonth,
+        'credit_card_exp_year': selectedYear,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Sign up successful!')));
+      Navigator.pop(context); // or _showLoginDialog();
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Signup failed: ${response.body}')),
+      );
+      print('Status Code: ${response.statusCode}');
+      print('Response Body: ${response.body}');
+    }
   }
 
   @override
@@ -435,9 +626,45 @@ class Realestatelanding extends StatelessWidget {
                   ),
                 ),
                 actions: [
-                  btn('Login', context, () => _showLoginDialog(context)),
-                  SizedBox(width: 20),
-                  btn('Sign Up', context, () => _showSignUpDialog(context)),
+                  if (!isLoggedIn) ...[
+                    btn('Login', context, () => _showLoginDialog(context)),
+                    btn('Sign Up', context, () => _showSignUpDialog(context)),
+                    SizedBox(width: 12),
+                  ] else ...[
+                    Padding(
+                      padding: const EdgeInsets.only(right: 12.0),
+                      child: PopupMenuButton<String>(
+                        offset: Offset(0, 50),
+                        onSelected: (value) {
+                          if (value == 'logout') {
+                            setState(() {
+                              isLoggedIn = false;
+                              loggedInUserName = '';
+                            });
+                          }
+                        },
+                        itemBuilder:
+                            (context) => [
+                              PopupMenuItem<String>(
+                                value: 'logout',
+                                child: Text('Logout'),
+                              ),
+                            ],
+                        child: CircleAvatar(
+                          backgroundColor: Colors.orangeAccent,
+                          child: Text(
+                            loggedInUserName.isNotEmpty
+                                ? loggedInUserName[0].toUpperCase()
+                                : '?',
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ],
               ),
               SliverToBoxAdapter(child: SizedBox(height: 100)),
@@ -484,11 +711,6 @@ class Realestatelanding extends StatelessWidget {
                       return ClipRRect(
                         borderRadius: BorderRadius.circular(12),
                         child: GridTile(
-                          child: Image.asset(
-                            'assets/images/property${index + 1}.jpg',
-
-                            fit: BoxFit.cover,
-                          ),
                           footer: Text(
                             'Property ${index + 1}',
                             style: const TextStyle(
@@ -496,6 +718,11 @@ class Realestatelanding extends StatelessWidget {
                               fontWeight: FontWeight.bold,
                             ),
                             textAlign: TextAlign.center,
+                          ),
+                          child: Image.asset(
+                            'assets/images/property${index + 1}.jpg',
+
+                            fit: BoxFit.cover,
                           ),
                         ),
                       );
