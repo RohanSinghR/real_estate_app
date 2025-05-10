@@ -3,10 +3,10 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 class PaymentsPage extends StatefulWidget {
-  final bool isRenter;
+  final String userType;
   final String email;
 
-  const PaymentsPage({super.key, required this.isRenter, required this.email});
+  const PaymentsPage({super.key, required this.userType, required this.email});
 
   @override
   State<PaymentsPage> createState() => _PaymentsPageState();
@@ -16,6 +16,8 @@ class _PaymentsPageState extends State<PaymentsPage> {
   List<Map<String, String>> paymentCards = [];
   bool isLoading = true;
   String? errorMessage;
+  bool isEditing = false;
+  int? editingCardIndex;
 
   @override
   void initState() {
@@ -59,14 +61,11 @@ class _PaymentsPageState extends State<PaymentsPage> {
           setState(() {
             paymentCards =
                 data.map<Map<String, String>>((card) {
-                  // Handle potential null or invalid card numbers
                   final cardNumber = card['card_number']?.toString() ?? '';
                   final last4 =
                       cardNumber.length >= 4
                           ? cardNumber.substring(cardNumber.length - 4)
                           : cardNumber;
-
-                  // Format the expiry date for display
                   String expiryDate = card['expiry_date']?.toString() ?? '';
                   if (expiryDate.isNotEmpty && expiryDate.contains('-')) {
                     final parts = expiryDate.split('-');
@@ -74,11 +73,17 @@ class _PaymentsPageState extends State<PaymentsPage> {
                       expiryDate = '${parts[1]}/${parts[0].substring(2)}';
                     }
                   }
+                  final billingAddress =
+                      card['billing_address']?.toString() ??
+                      'No address provided';
+                  final cvv = card['cvv'] != null ? '***' : '';
 
                   return {
                     'last4': last4,
                     'expiry': expiryDate,
                     'card_number': cardNumber,
+                    'billing_address': billingAddress,
+                    'cvv': cvv,
                   };
                 }).toList();
             isLoading = false;
@@ -117,7 +122,7 @@ class _PaymentsPageState extends State<PaymentsPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: const Text('Payment method deleted successfully'),
-            backgroundColor: Theme.of(context).colorScheme.primary,
+            backgroundColor: const Color.fromARGB(255, 255, 161, 126),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -126,7 +131,7 @@ class _PaymentsPageState extends State<PaymentsPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to delete payment method: ${response.body}'),
-            backgroundColor: Theme.of(context).colorScheme.error,
+            backgroundColor: Colors.red,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -136,11 +141,211 @@ class _PaymentsPageState extends State<PaymentsPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Failed to delete payment method: ${e.toString()}'),
-          backgroundColor: Theme.of(context).colorScheme.error,
+          backgroundColor: Colors.red,
           behavior: SnackBarBehavior.floating,
         ),
       );
     }
+  }
+
+  Future<void> updateCard(String cardNumber, String billingAddress) async {
+    try {
+      final body = {
+        'card_number': cardNumber,
+        'billing_address': billingAddress,
+      };
+
+      print('Updating card with data: $body');
+
+      final response = await http.put(
+        Uri.parse('http://localhost:3000/api/cards'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(body),
+      );
+
+      print('Update response: ${response.statusCode} - ${response.body}');
+
+      if (response.statusCode == 200) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Payment method updated successfully'),
+            backgroundColor: const Color.fromARGB(255, 255, 161, 126),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        fetchPaymentCards();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to update payment method: ${response.body}'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      print('Exception updating card: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to update payment method: ${e.toString()}'),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  void showEditCardDialog(Map<String, String> card) {
+    final billingController = TextEditingController(
+      text: card['billing_address'] ?? '',
+    );
+
+    showDialog(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            backgroundColor: const Color(0xFF2C2C2C),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            title: Row(
+              children: [
+                const Icon(
+                  Icons.edit,
+                  color: Color.fromARGB(255, 255, 161, 126),
+                  size: 24,
+                ),
+                const SizedBox(width: 10),
+                const Text(
+                  'Update Payment Method',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Card Number',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.white70,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 12,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.black12,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.white24, width: 1),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.credit_card,
+                          color: Colors.white54,
+                          size: 18,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          '**** **** **** ${card['last4']}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  const Text(
+                    'Billing Address',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.white70,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  TextField(
+                    controller: billingController,
+                    decoration: InputDecoration(
+                      hintText: 'Enter billing address',
+                      hintStyle: TextStyle(
+                        color: Colors.white.withOpacity(0.3),
+                      ),
+                      filled: true,
+                      fillColor: Colors.black12,
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: const BorderSide(color: Colors.white24),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: const BorderSide(
+                          color: Color.fromARGB(255, 255, 161, 126),
+                        ),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      prefixIcon: const Icon(
+                        Icons.location_on,
+                        color: Colors.white54,
+                      ),
+                    ),
+                    style: const TextStyle(color: Colors.white),
+                    maxLines: 3,
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text(
+                  'Cancel',
+                  style: TextStyle(color: Colors.white70),
+                ),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  if (billingController.text.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Billing address cannot be empty'),
+                        backgroundColor: Colors.red,
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                    return;
+                  }
+
+                  Navigator.pop(context);
+                  updateCard(card['card_number']!, billingController.text);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFFFB27E),
+                  foregroundColor: Colors.black,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: const Text(
+                  'Update',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          ),
+    );
   }
 
   void showAddCardDialog() {
@@ -156,23 +361,26 @@ class _PaymentsPageState extends State<PaymentsPage> {
           (context) => StatefulBuilder(
             builder:
                 (context, setDialogState) => AlertDialog(
-                  backgroundColor: const Color(
-                    0xFF2C2C2C,
-                  ), // charcoal gray surface from theme.dart
+                  backgroundColor: const Color(0xFF2C2C2C),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                   ),
-                  title: Text(
-                    'Add Payment Method',
-                    style: TextStyle(
-                      color: const Color.fromARGB(
-                        255,
-                        255,
-                        161,
-                        126,
-                      ), // sunset orange from theme.dart
-                      fontWeight: FontWeight.bold,
-                    ),
+                  title: Row(
+                    children: [
+                      const Icon(
+                        Icons.add_card,
+                        color: Color.fromARGB(255, 255, 161, 126),
+                        size: 24,
+                      ),
+                      const SizedBox(width: 10),
+                      const Text(
+                        'Add Payment Method',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
                   ),
                   content: SingleChildScrollView(
                     child: Column(
@@ -183,34 +391,29 @@ class _PaymentsPageState extends State<PaymentsPage> {
                           decoration: InputDecoration(
                             labelText: 'Card Number',
                             labelStyle: TextStyle(
-                              color: Theme.of(
-                                context,
-                              ).colorScheme.onSurface.withOpacity(0.8),
+                              color: Colors.white.withOpacity(0.8),
                             ),
                             enabledBorder: OutlineInputBorder(
                               borderSide: BorderSide(
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.onSurface.withOpacity(0.3),
+                                color: Colors.white.withOpacity(0.3),
                               ),
                               borderRadius: BorderRadius.circular(8),
                             ),
-                            focusedBorder: OutlineInputBorder(
+                            focusedBorder: const OutlineInputBorder(
                               borderSide: BorderSide(
-                                color: const Color.fromARGB(
-                                  255,
-                                  255,
-                                  161,
-                                  126,
-                                ), // sunset orange from theme.dart
+                                color: Color.fromARGB(255, 255, 161, 126),
                               ),
-                              borderRadius: BorderRadius.circular(8),
+                              borderRadius: BorderRadius.all(
+                                Radius.circular(8),
+                              ),
+                            ),
+                            prefixIcon: const Icon(
+                              Icons.credit_card,
+                              color: Colors.white54,
                             ),
                           ),
                           keyboardType: TextInputType.number,
-                          style: TextStyle(
-                            color: Theme.of(context).colorScheme.onSurface,
-                          ),
+                          style: const TextStyle(color: Colors.white),
                         ),
                         const SizedBox(height: 16),
                         TextField(
@@ -218,35 +421,34 @@ class _PaymentsPageState extends State<PaymentsPage> {
                           decoration: InputDecoration(
                             labelText: 'CVV',
                             labelStyle: TextStyle(
-                              color: Theme.of(
-                                context,
-                              ).colorScheme.onSurface.withOpacity(0.8),
+                              color: Colors.white.withOpacity(0.8),
                             ),
                             enabledBorder: OutlineInputBorder(
                               borderSide: BorderSide(
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.onSurface.withOpacity(0.3),
+                                color: Colors.white.withOpacity(0.3),
                               ),
                               borderRadius: BorderRadius.circular(8),
                             ),
-                            focusedBorder: OutlineInputBorder(
+                            focusedBorder: const OutlineInputBorder(
                               borderSide: BorderSide(
-                                color: Theme.of(context).colorScheme.primary,
+                                color: Color.fromARGB(255, 255, 161, 126),
                               ),
-                              borderRadius: BorderRadius.circular(8),
+                              borderRadius: BorderRadius.all(
+                                Radius.circular(8),
+                              ),
                             ),
                             counterStyle: TextStyle(
-                              color: Theme.of(
-                                context,
-                              ).colorScheme.onSurface.withOpacity(0.6),
+                              color: Colors.white.withOpacity(0.6),
+                            ),
+                            prefixIcon: const Icon(
+                              Icons.security,
+                              color: Colors.white54,
                             ),
                           ),
                           keyboardType: TextInputType.number,
                           maxLength: 4,
-                          style: TextStyle(
-                            color: Theme.of(context).colorScheme.onSurface,
-                          ),
+                          style: const TextStyle(color: Colors.white),
+                          obscureText: true,
                         ),
                         const SizedBox(height: 8),
                         TextField(
@@ -254,43 +456,37 @@ class _PaymentsPageState extends State<PaymentsPage> {
                           decoration: InputDecoration(
                             labelText: 'Billing Address',
                             labelStyle: TextStyle(
-                              color: Theme.of(
-                                context,
-                              ).colorScheme.onSurface.withOpacity(0.8),
+                              color: Colors.white.withOpacity(0.8),
                             ),
                             enabledBorder: OutlineInputBorder(
                               borderSide: BorderSide(
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.onSurface.withOpacity(0.3),
+                                color: Colors.white.withOpacity(0.3),
                               ),
                               borderRadius: BorderRadius.circular(8),
                             ),
-                            focusedBorder: OutlineInputBorder(
+                            focusedBorder: const OutlineInputBorder(
                               borderSide: BorderSide(
-                                color: Theme.of(context).colorScheme.primary,
+                                color: Color.fromARGB(255, 255, 161, 126),
                               ),
-                              borderRadius: BorderRadius.circular(8),
+                              borderRadius: BorderRadius.all(
+                                Radius.circular(8),
+                              ),
+                            ),
+                            prefixIcon: const Icon(
+                              Icons.location_on,
+                              color: Colors.white54,
                             ),
                           ),
-                          maxLines: 2,
-                          style: TextStyle(
-                            color: Theme.of(context).colorScheme.onSurface,
-                          ),
+                          maxLines: 3,
+                          style: const TextStyle(color: Colors.white),
                         ),
                         const SizedBox(height: 24),
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.surface.withOpacity(0.3),
+                            color: Colors.black12,
                             borderRadius: BorderRadius.circular(8),
-                            border: Border.all(
-                              color: Theme.of(
-                                context,
-                              ).colorScheme.onSurface.withOpacity(0.2),
-                            ),
+                            border: Border.all(color: Colors.white24, width: 1),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -298,28 +494,24 @@ class _PaymentsPageState extends State<PaymentsPage> {
                               Text(
                                 'Expiration Date',
                                 style: TextStyle(
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.onSurface.withOpacity(0.8),
+                                  color: Colors.white.withOpacity(0.8),
                                   fontWeight: FontWeight.w500,
+                                  fontSize: 14,
                                 ),
                               ),
-                              const SizedBox(height: 8),
+                              const SizedBox(height: 12),
                               Row(
                                 children: [
                                   Expanded(
                                     child: DropdownButtonFormField<String>(
                                       value: month,
                                       isExpanded: true,
-                                      dropdownColor:
-                                          Theme.of(context).colorScheme.surface,
+                                      dropdownColor: const Color(0xFF2C2C2C),
                                       decoration: InputDecoration(
                                         labelText: 'Month',
                                         labelStyle: TextStyle(
-                                          color: Theme.of(context)
-                                              .colorScheme
-                                              .onSurface
-                                              .withOpacity(0.6),
+                                          color: Colors.white.withOpacity(0.6),
+                                          fontSize: 12,
                                         ),
                                         contentPadding:
                                             const EdgeInsets.symmetric(
@@ -331,18 +523,14 @@ class _PaymentsPageState extends State<PaymentsPage> {
                                             8,
                                           ),
                                           borderSide: BorderSide(
-                                            color: Theme.of(context)
-                                                .colorScheme
-                                                .onSurface
-                                                .withOpacity(0.3),
+                                            color: Colors.white.withOpacity(
+                                              0.3,
+                                            ),
                                           ),
                                         ),
                                       ),
-                                      style: TextStyle(
-                                        color:
-                                            Theme.of(
-                                              context,
-                                            ).colorScheme.onSurface,
+                                      style: const TextStyle(
+                                        color: Colors.white,
                                       ),
                                       items:
                                           List.generate(
@@ -369,15 +557,12 @@ class _PaymentsPageState extends State<PaymentsPage> {
                                     child: DropdownButtonFormField<String>(
                                       value: year,
                                       isExpanded: true,
-                                      dropdownColor:
-                                          Theme.of(context).colorScheme.surface,
+                                      dropdownColor: const Color(0xFF2C2C2C),
                                       decoration: InputDecoration(
                                         labelText: 'Year',
                                         labelStyle: TextStyle(
-                                          color: Theme.of(context)
-                                              .colorScheme
-                                              .onSurface
-                                              .withOpacity(0.6),
+                                          color: Colors.white.withOpacity(0.6),
+                                          fontSize: 12,
                                         ),
                                         contentPadding:
                                             const EdgeInsets.symmetric(
@@ -389,18 +574,14 @@ class _PaymentsPageState extends State<PaymentsPage> {
                                             8,
                                           ),
                                           borderSide: BorderSide(
-                                            color: Theme.of(context)
-                                                .colorScheme
-                                                .onSurface
-                                                .withOpacity(0.3),
+                                            color: Colors.white.withOpacity(
+                                              0.3,
+                                            ),
                                           ),
                                         ),
                                       ),
-                                      style: TextStyle(
-                                        color:
-                                            Theme.of(
-                                              context,
-                                            ).colorScheme.onSurface,
+                                      style: const TextStyle(
+                                        color: Colors.white,
                                       ),
                                       items:
                                           List.generate(
@@ -432,13 +613,9 @@ class _PaymentsPageState extends State<PaymentsPage> {
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.pop(context),
-                      child: Text(
+                      child: const Text(
                         'Cancel',
-                        style: TextStyle(
-                          color: Theme.of(
-                            context,
-                          ).colorScheme.onSurface.withOpacity(0.8),
-                        ),
+                        style: TextStyle(color: Colors.white70),
                       ),
                     ),
                     ElevatedButton(
@@ -447,10 +624,9 @@ class _PaymentsPageState extends State<PaymentsPage> {
                             cvvController.text.isEmpty ||
                             billingController.text.isEmpty) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: const Text('Please fill all fields'),
-                              backgroundColor:
-                                  Theme.of(context).colorScheme.error,
+                            const SnackBar(
+                              content: Text('Please fill all fields'),
+                              backgroundColor: Colors.red,
                               behavior: SnackBarBehavior.floating,
                             ),
                           );
@@ -482,12 +658,16 @@ class _PaymentsPageState extends State<PaymentsPage> {
                           if (res.statusCode == 200) {
                             Navigator.pop(context);
                             ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: const Text(
+                              const SnackBar(
+                                content: Text(
                                   'Payment method added successfully',
                                 ),
-                                backgroundColor:
-                                    Theme.of(context).colorScheme.primary,
+                                backgroundColor: Color.fromARGB(
+                                  255,
+                                  255,
+                                  161,
+                                  126,
+                                ),
                                 behavior: SnackBarBehavior.floating,
                               ),
                             );
@@ -498,8 +678,7 @@ class _PaymentsPageState extends State<PaymentsPage> {
                                 content: Text(
                                   'Failed to add payment method: ${res.body}',
                                 ),
-                                backgroundColor:
-                                    Theme.of(context).colorScheme.error,
+                                backgroundColor: Colors.red,
                                 behavior: SnackBarBehavior.floating,
                               ),
                             );
@@ -511,8 +690,7 @@ class _PaymentsPageState extends State<PaymentsPage> {
                               content: Text(
                                 'Failed to add payment method: ${e.toString()}',
                               ),
-                              backgroundColor:
-                                  Theme.of(context).colorScheme.error,
+                              backgroundColor: Colors.red,
                               behavior: SnackBarBehavior.floating,
                             ),
                           );
@@ -542,444 +720,751 @@ class _PaymentsPageState extends State<PaymentsPage> {
 
   @override
   Widget build(BuildContext context) {
-    if (!widget.isRenter) {
+    if (widget.userType.toLowerCase() == "agent") {
       return Scaffold(
-        appBar: AppBar(title: const Text('Payments'), elevation: 0),
+        appBar: AppBar(
+          title: const Text('Payments'),
+          elevation: 0,
+          backgroundColor: const Color(0xFF2C2C2C),
+          foregroundColor: Colors.white,
+        ),
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                Icons.lock,
-                size: 64,
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
-              ),
+              Icon(Icons.lock, size: 64, color: Colors.white.withOpacity(0.5)),
               const SizedBox(height: 16),
-              Text(
+              const Text(
                 'Only renters can access this page',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w500,
-                  color: Theme.of(context).colorScheme.onSurface,
+                  color: Colors.black,
                 ),
               ),
             ],
           ),
         ),
       );
-    }
-
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Your Payment Methods'),
-        elevation: 0,
-        backgroundColor: const Color(
-          0xFF2C2C2C,
-        ), // charcoal gray from theme.dart
-        foregroundColor: Colors.white, // from theme.dart
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: showAddCardDialog,
-        icon: const Icon(Icons.add),
-        label: const Text('Add Card'),
-        backgroundColor: const Color.fromARGB(
-          255,
-          255,
-          161,
-          126,
-        ), // sunset orange from theme.dart
-        foregroundColor: Colors.black, // text/icons on primary from theme.dart
-        elevation: 4,
-      ),
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              const Color.fromARGB(255, 73, 21, 0),
-              Colors.black,
-              const Color.fromARGB(255, 73, 21, 0),
-            ],
-          ),
+    } else {
+      return Scaffold(
+        appBar: AppBar(
+          title: Text('${widget.userType}'),
+          elevation: 0,
+          backgroundColor: const Color(0xFF2C2C2C),
+          foregroundColor: Colors.white,
         ),
-        child:
-            isLoading
-                ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      CircularProgressIndicator(
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Loading payment methods...',
-                        style: TextStyle(
-                          color: Theme.of(
-                            context,
-                          ).colorScheme.onSurface.withOpacity(0.7),
-                        ),
-                      ),
-                    ],
-                  ),
-                )
-                : errorMessage != null
-                ? Center(
-                  child: Container(
-                    padding: const EdgeInsets.all(24),
-                    margin: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.error.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.error.withOpacity(0.3),
-                      ),
-                    ),
+        backgroundColor: const Color(0xFF0D0D0D),
+        floatingActionButton: FloatingActionButton.extended(
+          onPressed: showAddCardDialog,
+          icon: const Icon(Icons.add),
+          label: const Text('Add Card'),
+          backgroundColor: const Color.fromARGB(255, 255, 161, 126),
+          foregroundColor: Colors.black,
+          elevation: 4,
+        ),
+        body: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topRight,
+              end: Alignment.bottomLeft,
+              colors: [
+                const Color(0xFF0D0D0D),
+                const Color(0xFF0D0D0D),
+                const Color.fromARGB(255, 255, 161, 126).withOpacity(0.05),
+                const Color.fromARGB(255, 255, 161, 126).withOpacity(0.1),
+              ],
+            ),
+          ),
+          child:
+              isLoading
+                  ? Center(
                     child: Column(
-                      mainAxisSize: MainAxisSize.min,
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(
-                          Icons.error_outline,
-                          size: 48,
-                          color: Theme.of(context).colorScheme.error,
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'Oops! Something went wrong',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Theme.of(context).colorScheme.onSurface,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          errorMessage!,
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.onSurface.withOpacity(0.8),
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-                        ElevatedButton.icon(
-                          onPressed: fetchPaymentCards,
-                          icon: const Icon(Icons.refresh),
-                          label: const Text('Try Again'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor:
-                                Theme.of(context).colorScheme.primary,
-                            foregroundColor:
-                                Theme.of(context).colorScheme.onPrimary,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 20,
-                              vertical: 12,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                )
-                : paymentCards.isEmpty
-                ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(24),
-                        decoration: BoxDecoration(
-                          color: Theme.of(
-                            context,
-                          ).colorScheme.surface.withOpacity(0.3),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          Icons.credit_card_off,
-                          size: 48,
+                        CircularProgressIndicator(
                           color: const Color.fromARGB(
                             255,
                             255,
                             161,
                             126,
-                          ).withOpacity(0.8), // sunset orange from theme.dart
+                          ), // sunset orange
                         ),
-                      ),
-                      const SizedBox(height: 24),
-                      Text(
-                        'No payment methods found',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w500,
-                          color: Theme.of(context).colorScheme.onSurface,
+                        const SizedBox(height: 16),
+                        const Text(
+                          'Loading payment methods...',
+                          style: TextStyle(color: Colors.white70),
                         ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Add a credit card to get started',
-                        style: TextStyle(
-                          color: Theme.of(
-                            context,
-                          ).colorScheme.onSurface.withOpacity(0.7),
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      ElevatedButton.icon(
-                        onPressed: showAddCardDialog,
-                        icon: const Icon(Icons.add),
-                        label: const Text('Add Payment Method'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor:
-                              Theme.of(context).colorScheme.primary,
-                          foregroundColor:
-                              Theme.of(context).colorScheme.onPrimary,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 12,
+                      ],
+                    ),
+                  )
+                  : errorMessage != null
+                  ? Center(
+                    child: Container(
+                      padding: const EdgeInsets.all(32),
+                      margin: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF2C2C2C), // charcoal gray
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.3),
+                            blurRadius: 15,
+                            offset: const Offset(0, 8),
                           ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
+                        ],
+                        border: Border.all(
+                          color: Colors.red.withOpacity(0.3),
+                          width: 1,
                         ),
                       ),
-                    ],
-                  ),
-                )
-                : Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.only(
-                          top: 16,
-                          bottom: 12,
-                          left: 4,
-                        ),
-                        child: Text(
-                          'Saved Cards',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.onSurface.withOpacity(0.8),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                              color: Colors.red.withOpacity(0.15),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.error_outline,
+                              size: 56,
+                              color: Colors.red,
+                            ),
                           ),
-                        ),
-                      ),
-                      Expanded(
-                        child: ListView.builder(
-                          itemCount: paymentCards.length,
-                          itemBuilder: (context, index) {
-                            final card = paymentCards[index];
-                            return Container(
-                              margin: const EdgeInsets.only(bottom: 16),
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [
-                                    Theme.of(context).colorScheme.surface,
-                                    Theme.of(
-                                      context,
-                                    ).colorScheme.surface.withOpacity(0.7),
-                                  ],
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                ),
-                                borderRadius: BorderRadius.circular(16),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.2),
-                                    blurRadius: 8,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ],
+                          const SizedBox(height: 28),
+                          const Text(
+                            'Connection Error',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          Text(
+                            errorMessage!,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              color: Colors.white70,
+                            ),
+                          ),
+                          const SizedBox(height: 28),
+                          ElevatedButton.icon(
+                            onPressed: fetchPaymentCards,
+                            icon: const Icon(Icons.refresh),
+                            label: const Text('Try Again'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(
+                                0xFFFFB27E,
+                              ), // lighter orange from theme.dart
+                              foregroundColor: Colors.black,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 24,
+                                vertical: 14,
                               ),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(16),
-                                child: Material(
-                                  color: Colors.transparent,
-                                  child: ListTile(
-                                    contentPadding: const EdgeInsets.all(16),
-                                    leading: Container(
-                                      padding: const EdgeInsets.all(12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              textStyle: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              elevation: 4,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                  : paymentCards.isEmpty
+                  ? Center(
+                    child: Container(
+                      padding: const EdgeInsets.all(32),
+                      margin: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF2C2C2C), // charcoal gray
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.3),
+                            blurRadius: 15,
+                            offset: const Offset(0, 8),
+                          ),
+                        ],
+                        border: Border.all(
+                          color: const Color.fromARGB(
+                            255,
+                            255,
+                            161,
+                            126,
+                          ).withOpacity(0.2),
+                          width: 1,
+                        ),
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                              color: const Color.fromARGB(
+                                255,
+                                255,
+                                161,
+                                126,
+                              ).withOpacity(0.15),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.credit_card_off,
+                              size: 56,
+                              color: Color.fromARGB(255, 255, 161, 126),
+                            ),
+                          ),
+                          const SizedBox(height: 28),
+                          const Text(
+                            'No payment methods found',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          const Text(
+                            'Add a credit card to make payments',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.white70,
+                            ),
+                          ),
+                          const SizedBox(height: 28),
+                          ElevatedButton.icon(
+                            onPressed: showAddCardDialog,
+                            icon: const Icon(Icons.add),
+                            label: const Text('Add Payment Method'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(
+                                0xFFFFB27E,
+                              ), // lighter orange from theme.dart
+                              foregroundColor: Colors.black,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 24,
+                                vertical: 14,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              textStyle: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              elevation: 4,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                  : Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Header with decorative element
+                        Padding(
+                          padding: const EdgeInsets.only(
+                            top: 16,
+                            bottom: 12,
+                            left: 4,
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Container(
+                                width: 4,
+                                height: 24,
+                                decoration: BoxDecoration(
+                                  color: const Color.fromARGB(
+                                    255,
+                                    255,
+                                    161,
+                                    126,
+                                  ),
+                                  borderRadius: BorderRadius.circular(2),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              const Text(
+                                'Saved Cards',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Expanded(
+                          child: ListView.builder(
+                            itemCount: paymentCards.length,
+                            itemBuilder: (context, index) {
+                              final card = paymentCards[index];
+                              return Container(
+                                margin: const EdgeInsets.only(bottom: 16),
+                                child: Stack(
+                                  children: [
+                                    // Card background with gradient
+                                    Container(
                                       decoration: BoxDecoration(
-                                        color: const Color.fromARGB(
-                                          255,
-                                          255,
-                                          161,
-                                          126,
-                                        ).withOpacity(
-                                          0.2,
-                                        ), // sunset orange from theme.dart
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      child: Icon(
-                                        Icons.credit_card,
-                                        color: const Color.fromARGB(
-                                          255,
-                                          255,
-                                          161,
-                                          126,
-                                        ), // sunset orange from theme.dart
-                                        size: 28,
-                                      ),
-                                    ),
-                                    title: Padding(
-                                      padding: const EdgeInsets.only(bottom: 6),
-                                      child: Text(
-                                        '**** **** **** ${card['last4']}',
-                                        style: TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold,
-                                          color:
-                                              Theme.of(
-                                                context,
-                                              ).colorScheme.onSurface,
+                                        gradient: LinearGradient(
+                                          colors: [
+                                            const Color(
+                                              0xFF2C2C2C,
+                                            ), // charcoal gray
+                                            const Color(
+                                              0xFF232323,
+                                            ), // slightly darker
+                                          ],
+                                          begin: Alignment.topLeft,
+                                          end: Alignment.bottomRight,
                                         ),
-                                      ),
-                                    ),
-                                    subtitle: Row(
-                                      children: [
-                                        Icon(
-                                          Icons.calendar_today,
-                                          size: 14,
-                                          color: Theme.of(context)
-                                              .colorScheme
-                                              .onSurface
-                                              .withOpacity(0.6),
-                                        ),
-                                        const SizedBox(width: 4),
-                                        Text(
-                                          'Expires: ${card['expiry']}',
-                                          style: TextStyle(
-                                            color: Theme.of(context)
-                                                .colorScheme
-                                                .onSurface
-                                                .withOpacity(0.7),
+                                        borderRadius: BorderRadius.circular(16),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.black.withOpacity(
+                                              0.3,
+                                            ),
+                                            blurRadius: 10,
+                                            offset: const Offset(0, 4),
                                           ),
-                                        ),
-                                      ],
-                                    ),
-                                    trailing: IconButton(
-                                      icon: Container(
-                                        padding: const EdgeInsets.all(6),
-                                        decoration: BoxDecoration(
-                                          color: Theme.of(
-                                            context,
-                                          ).colorScheme.error.withOpacity(0.1),
-                                          shape: BoxShape.circle,
-                                        ),
-                                        child: Icon(
-                                          Icons.delete_outline,
-                                          color:
-                                              Theme.of(
-                                                context,
-                                              ).colorScheme.error,
-                                        ),
+                                        ],
                                       ),
-                                      onPressed: () {
-                                        showDialog(
-                                          context: context,
-                                          builder:
-                                              (_) => AlertDialog(
-                                                backgroundColor: const Color(
-                                                  0xFF2C2C2C,
-                                                ), // charcoal gray from theme.dart
-                                                shape: RoundedRectangleBorder(
-                                                  borderRadius:
-                                                      BorderRadius.circular(16),
-                                                ),
-                                                title: Text(
-                                                  'Delete Payment Method',
-                                                  style: TextStyle(
-                                                    color:
-                                                        Theme.of(
-                                                          context,
-                                                        ).colorScheme.onSurface,
-                                                    fontWeight: FontWeight.bold,
-                                                  ),
-                                                ),
-                                                content: Text(
-                                                  'Are you sure you want to delete this payment method?',
-                                                  style: TextStyle(
-                                                    color: Theme.of(context)
-                                                        .colorScheme
-                                                        .onSurface
-                                                        .withOpacity(0.8),
-                                                  ),
-                                                ),
-                                                actions: [
-                                                  TextButton(
-                                                    onPressed:
-                                                        () => Navigator.pop(
-                                                          context,
+                                      child: ClipRRect(
+                                        borderRadius: BorderRadius.circular(16),
+                                        child: Container(
+                                          padding: const EdgeInsets.all(16),
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              // Card top section
+                                              Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment
+                                                        .spaceBetween,
+                                                children: [
+                                                  // Card type icon
+                                                  Container(
+                                                    padding:
+                                                        const EdgeInsets.all(
+                                                          10,
                                                         ),
-                                                    child: Text(
-                                                      'Cancel',
-                                                      style: TextStyle(
-                                                        color: Theme.of(context)
-                                                            .colorScheme
-                                                            .onSurface
-                                                            .withOpacity(0.8),
+                                                    decoration: BoxDecoration(
+                                                      color:
+                                                          const Color.fromARGB(
+                                                            255,
+                                                            255,
+                                                            161,
+                                                            126,
+                                                          ).withOpacity(0.2),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            12,
+                                                          ),
+                                                    ),
+                                                    child: const Icon(
+                                                      Icons.credit_card,
+                                                      color: Color.fromARGB(
+                                                        255,
+                                                        255,
+                                                        161,
+                                                        126,
                                                       ),
+                                                      size: 24,
                                                     ),
                                                   ),
-                                                  ElevatedButton(
-                                                    onPressed: () {
-                                                      Navigator.pop(context);
-                                                      deleteCard(
-                                                        card['card_number']!,
-                                                      );
-                                                    },
-                                                    style: ElevatedButton.styleFrom(
-                                                      backgroundColor:
-                                                          Theme.of(
-                                                            context,
-                                                          ).colorScheme.error,
-                                                      foregroundColor:
-                                                          Colors.white,
-                                                      shape: RoundedRectangleBorder(
-                                                        borderRadius:
-                                                            BorderRadius.circular(
-                                                              8,
-                                                            ),
-                                                      ),
+                                                  // Chip icon
+                                                  Container(
+                                                    padding:
+                                                        const EdgeInsets.all(8),
+                                                    decoration: BoxDecoration(
+                                                      color: const Color(
+                                                        0xFFFFC36B,
+                                                      ).withOpacity(
+                                                        0.2,
+                                                      ), // soft golden light
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            8,
+                                                          ),
                                                     ),
-                                                    child: const Text(
-                                                      'Delete',
-                                                      style: TextStyle(
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                      ),
+                                                    child: const Icon(
+                                                      Icons.memory,
+                                                      color: Color(
+                                                        0xFFFFC36B,
+                                                      ), // soft golden light
+                                                      size: 20,
                                                     ),
                                                   ),
                                                 ],
                                               ),
-                                        );
-                                      },
+
+                                              const SizedBox(height: 16),
+
+                                              // Card number
+                                              Text(
+                                                '**** **** **** ${card['last4']}',
+                                                style: const TextStyle(
+                                                  fontSize: 20,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Colors.white,
+                                                  letterSpacing: 1.5,
+                                                ),
+                                              ),
+
+                                              const SizedBox(height: 20),
+
+                                              // Card details row
+                                              Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment
+                                                        .spaceBetween,
+                                                children: [
+                                                  // Expiry date
+                                                  Column(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
+                                                    children: [
+                                                      const Text(
+                                                        'EXPIRES',
+                                                        style: TextStyle(
+                                                          fontSize: 10,
+                                                          color: Colors.white70,
+                                                          letterSpacing: 1.0,
+                                                        ),
+                                                      ),
+                                                      const SizedBox(height: 4),
+                                                      Text(
+                                                        card['expiry'] ?? '',
+                                                        style: const TextStyle(
+                                                          fontSize: 16,
+                                                          fontWeight:
+                                                              FontWeight.w600,
+                                                          color: Colors.white,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+
+                                                  // Card holder
+                                                  Column(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
+                                                    children: [
+                                                      const Text(
+                                                        'CVV',
+                                                        style: TextStyle(
+                                                          fontSize: 10,
+                                                          color: Colors.white70,
+                                                          letterSpacing: 1.0,
+                                                        ),
+                                                      ),
+                                                      const SizedBox(height: 4),
+                                                      const Text(
+                                                        '***',
+                                                        style: TextStyle(
+                                                          fontSize: 16,
+                                                          fontWeight:
+                                                              FontWeight.w600,
+                                                          color: Colors.white,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+
+                                                  // Action buttons
+                                                  Row(
+                                                    children: [
+                                                      // Edit button
+                                                      Material(
+                                                        color:
+                                                            Colors.transparent,
+                                                        child: InkWell(
+                                                          onTap: () {
+                                                            showEditCardDialog(
+                                                              card,
+                                                            );
+                                                          },
+                                                          borderRadius:
+                                                              BorderRadius.circular(
+                                                                12,
+                                                              ),
+                                                          child: Container(
+                                                            padding:
+                                                                const EdgeInsets.all(
+                                                                  8,
+                                                                ),
+                                                            decoration: BoxDecoration(
+                                                              color:
+                                                                  const Color.fromARGB(
+                                                                    255,
+                                                                    255,
+                                                                    161,
+                                                                    126,
+                                                                  ).withOpacity(
+                                                                    0.2,
+                                                                  ),
+                                                              borderRadius:
+                                                                  BorderRadius.circular(
+                                                                    12,
+                                                                  ),
+                                                            ),
+                                                            child: const Icon(
+                                                              Icons.edit,
+                                                              color:
+                                                                  Color.fromARGB(
+                                                                    255,
+                                                                    255,
+                                                                    161,
+                                                                    126,
+                                                                  ),
+                                                              size: 20,
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ),
+
+                                                      const SizedBox(width: 8),
+
+                                                      // Delete button
+                                                      Material(
+                                                        color:
+                                                            Colors.transparent,
+                                                        child: InkWell(
+                                                          onTap: () {
+                                                            showDialog(
+                                                              context: context,
+                                                              builder:
+                                                                  (
+                                                                    _,
+                                                                  ) => AlertDialog(
+                                                                    backgroundColor:
+                                                                        const Color(
+                                                                          0xFF2C2C2C,
+                                                                        ),
+                                                                    shape: RoundedRectangleBorder(
+                                                                      borderRadius:
+                                                                          BorderRadius.circular(
+                                                                            16,
+                                                                          ),
+                                                                    ),
+                                                                    title: const Text(
+                                                                      'Delete Payment Method',
+                                                                      style: TextStyle(
+                                                                        color:
+                                                                            Colors.white,
+                                                                        fontWeight:
+                                                                            FontWeight.bold,
+                                                                      ),
+                                                                    ),
+                                                                    content: const Text(
+                                                                      'Are you sure you want to delete this payment method?',
+                                                                      style: TextStyle(
+                                                                        color:
+                                                                            Colors.white70,
+                                                                      ),
+                                                                    ),
+                                                                    actions: [
+                                                                      TextButton(
+                                                                        onPressed:
+                                                                            () => Navigator.pop(
+                                                                              context,
+                                                                            ),
+                                                                        child: const Text(
+                                                                          'Cancel',
+                                                                          style: TextStyle(
+                                                                            color:
+                                                                                Colors.white70,
+                                                                          ),
+                                                                        ),
+                                                                      ),
+                                                                      ElevatedButton(
+                                                                        onPressed: () {
+                                                                          Navigator.pop(
+                                                                            context,
+                                                                          );
+                                                                          deleteCard(
+                                                                            card['card_number']!,
+                                                                          );
+                                                                        },
+                                                                        style: ElevatedButton.styleFrom(
+                                                                          backgroundColor:
+                                                                              Colors.red, // error color
+                                                                          foregroundColor:
+                                                                              Colors.white,
+                                                                          shape: RoundedRectangleBorder(
+                                                                            borderRadius: BorderRadius.circular(
+                                                                              8,
+                                                                            ),
+                                                                          ),
+                                                                        ),
+                                                                        child: const Text(
+                                                                          'Delete',
+                                                                          style: TextStyle(
+                                                                            fontWeight:
+                                                                                FontWeight.bold,
+                                                                          ),
+                                                                        ),
+                                                                      ),
+                                                                    ],
+                                                                  ),
+                                                            );
+                                                          },
+                                                          borderRadius:
+                                                              BorderRadius.circular(
+                                                                12,
+                                                              ),
+                                                          child: Container(
+                                                            padding:
+                                                                const EdgeInsets.all(
+                                                                  8,
+                                                                ),
+                                                            decoration: BoxDecoration(
+                                                              color: Colors.red
+                                                                  .withOpacity(
+                                                                    0.2,
+                                                                  ),
+                                                              borderRadius:
+                                                                  BorderRadius.circular(
+                                                                    12,
+                                                                  ),
+                                                            ),
+                                                            child: const Icon(
+                                                              Icons
+                                                                  .delete_outline,
+                                                              color: Colors.red,
+                                                              size: 20,
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ],
+                                              ),
+
+                                              const SizedBox(height: 16),
+
+                                              // Billing address section
+                                              Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  const Text(
+                                                    'BILLING ADDRESS',
+                                                    style: TextStyle(
+                                                      fontSize: 10,
+                                                      color: Colors.white70,
+                                                      letterSpacing: 1.0,
+                                                    ),
+                                                  ),
+                                                  const SizedBox(height: 4),
+                                                  Container(
+                                                    width: double.infinity,
+                                                    padding:
+                                                        const EdgeInsets.all(
+                                                          10,
+                                                        ),
+                                                    decoration: BoxDecoration(
+                                                      color: Colors.black26,
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            8,
+                                                          ),
+                                                      border: Border.all(
+                                                        color: Colors.white10,
+                                                        width: 1,
+                                                      ),
+                                                    ),
+                                                    child: Text(
+                                                      card['billing_address'] ??
+                                                          'No address provided',
+                                                      style: const TextStyle(
+                                                        fontSize: 14,
+                                                        fontWeight:
+                                                            FontWeight.w400,
+                                                        color: Colors.white70,
+                                                      ),
+                                                      maxLines: 2,
+                                                      overflow:
+                                                          TextOverflow.ellipsis,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
                                     ),
-                                  ),
+
+                                    // Decorative accent line on top
+                                    Positioned(
+                                      top: 0,
+                                      left: 24,
+                                      right: 24,
+                                      child: Container(
+                                        height: 4,
+                                        decoration: BoxDecoration(
+                                          color: const Color.fromARGB(
+                                            255,
+                                            255,
+                                            161,
+                                            126,
+                                          ),
+                                          borderRadius: const BorderRadius.only(
+                                            bottomLeft: Radius.circular(4),
+                                            bottomRight: Radius.circular(4),
+                                          ),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: const Color.fromARGB(
+                                                255,
+                                                255,
+                                                161,
+                                                126,
+                                              ).withOpacity(0.5),
+                                              blurRadius: 6,
+                                              offset: const Offset(0, 2),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                              ),
-                            );
-                          },
+                              );
+                            },
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-      ),
-    );
+        ),
+      );
+    }
   }
 }

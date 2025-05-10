@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:real_estate_app/landing_page/realestatelanding.dart';
 import 'package:real_estate_app/landing_page/settings/paymentspage.dart';
+import 'package:real_estate_app/property_pages/property_type_page.dart';
 import 'package:url_strategy/url_strategy.dart';
 
 void main() {
@@ -21,10 +22,12 @@ class RealEstateMain extends StatelessWidget {
           return MaterialPageRoute(
             builder:
                 (context) => PaymentsPage(
-                  isRenter: args['isRenter'],
+                  userType: args['userType'],
                   email: args['email'],
                 ),
           );
+        } else if (settings.name == '/propertyType') {
+          return MaterialPageRoute(builder: (context) => PropertyTypePage());
         }
 
         return MaterialPageRoute(builder: (_) => const Realestatelanding());

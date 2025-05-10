@@ -78,7 +78,33 @@ router.post('/cards', (req, res) => {
     }
   );
 });
-
+router.put('/cards', (req, res) => {
+  const { card_number, billing_address } = req.body;
+  
+  if (!card_number || !billing_address) {
+    return res.status(400).json({ error: 'Card number and billing address are required' });
+  }
+  
+  console.log('Updating card:', { card_number, billing_address });
+  
+  const updateQuery = 'UPDATE Credit_Card SET billing_address = ? WHERE card_number = ?';
+  console.log('Running update query:', updateQuery, 'with params:', [billing_address, card_number]);
+  
+  db.query(updateQuery, [billing_address, card_number], (err, result) => {
+    if (err) {
+      console.error('Database error when updating card:', err);
+      return res.status(500).json({ error: 'Failed to update payment method', details: err.message });
+    }
+    
+    console.log('Update result:', result);
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'Card not found' });
+    }
+    
+    console.log('Card updated successfully:', card_number);
+    return res.status(200).json({ message: 'Payment method updated successfully' });
+  });
+});
 router.delete('/cards', (req, res) => {
   const { card_number } = req.body;
   if (!card_number) {

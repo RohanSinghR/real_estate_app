@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:real_estate_app/landing_page/settings/paymentspage.dart';
 import 'package:real_estate_app/theme/theme.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 
@@ -46,7 +45,7 @@ class _RealestatelandingState extends State<Realestatelanding> {
 
   bool pressed = true;
 
-  Widget _buildAboutStatCard(IconData icon, String title, String subtitle) {
+  Widget _aboutCard(IconData icon, String title, String subtitle) {
     return Container(
       height: 150,
       width: 110,
@@ -100,6 +99,28 @@ class _RealestatelandingState extends State<Realestatelanding> {
         ],
       ),
       child: Icon(icon, color: Colors.white, size: 20),
+    );
+  }
+
+  Widget _builtItem(String title, String value, IconData icon) {
+    return Column(
+      children: [
+        Icon(icon, color: Colors.white, size: 28),
+        const SizedBox(height: 8),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          title,
+          style: TextStyle(fontSize: 12, color: Colors.white.withOpacity(0.8)),
+        ),
+      ],
     );
   }
 
@@ -161,9 +182,20 @@ class _RealestatelandingState extends State<Realestatelanding> {
                 const SizedBox(height: 16),
                 TextField(
                   controller: passwordcontroller,
-                  obscureText: true,
+                  obscureText: obscureLogin ? true : false,
                   style: const TextStyle(color: Colors.white),
                   decoration: InputDecoration(
+                    suffixIcon: IconButton(
+                      onPressed: () {
+                        setState(() {
+                          obscureLogin = !obscureLogin;
+                        });
+                      },
+                      icon:
+                          obscureLogin
+                              ? Icon(Icons.visibility)
+                              : Icon(Icons.visibility_off),
+                    ),
                     hintText: 'Password',
                     hintStyle: TextStyle(color: Colors.white70),
                     filled: true,
@@ -175,17 +207,7 @@ class _RealestatelandingState extends State<Realestatelanding> {
                   ),
                 ),
                 const SizedBox(height: 6),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton(
-                    onPressed: () {},
-                    child: Text(
-                      'Forgot Password?',
-                      style: TextStyle(color: Colors.orangeAccent),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
+
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
@@ -218,6 +240,7 @@ class _RealestatelandingState extends State<Realestatelanding> {
     );
   }
 
+  String loggedInUserType = '';
   Future<void> login(BuildContext context) async {
     final url = Uri.parse('http://localhost:3000/api/login');
 
@@ -241,6 +264,7 @@ class _RealestatelandingState extends State<Realestatelanding> {
         setState(() {
           isLoggedIn = true;
           loggedInUserName = user['name'];
+          loggedInUserType = user['user_type'] ?? '';
         });
 
         ScaffoldMessenger.of(
@@ -276,7 +300,8 @@ class _RealestatelandingState extends State<Realestatelanding> {
   String selectedMonth = '01';
   String selectedYear = DateTime.now().year.toString();
   String userType = 'Renter';
-
+  bool obscureSign = true;
+  bool obscureLogin = true;
   void _showSignUpDialog(BuildContext context) {
     MediaQueryData mediaQueryData = MediaQuery.of(context);
 
@@ -342,8 +367,19 @@ class _RealestatelandingState extends State<Realestatelanding> {
                       TextField(
                         style: TextStyle(color: Colors.white),
                         controller: passwordcontroller,
-                        obscureText: true,
+                        obscureText: obscureSign ? true : false,
                         decoration: InputDecoration(
+                          suffixIcon: IconButton(
+                            onPressed: () {
+                              setState(() {
+                                obscureSign = !obscureSign;
+                              });
+                            },
+                            icon:
+                                obscureSign
+                                    ? Icon(Icons.visibility)
+                                    : Icon(Icons.visibility_off),
+                          ),
                           hintText: "Password",
                           hintStyle: TextStyle(color: Colors.white70),
                           filled: true,
@@ -497,11 +533,8 @@ class _RealestatelandingState extends State<Realestatelanding> {
                             ),
                             onPressed: () {
                               setState(() => pressed = false);
-                              Timer(Duration(milliseconds: 2000), () {
-                                signup(context);
-                                Navigator.pop(context);
-                                _showLoginDialog(context);
-                              });
+
+                              signup(context);
                             },
                             child: const Text(
                               'Sign Up',
@@ -590,7 +623,6 @@ class _RealestatelandingState extends State<Realestatelanding> {
         creditCardBillingController.clear();
 
         Navigator.pop(context);
-        _showLoginDialog(context);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Signup failed: ${response.body}')),
@@ -678,21 +710,56 @@ class _RealestatelandingState extends State<Realestatelanding> {
                               context,
                               '/payments',
                               arguments: {
-                                'isRenter': true,
+                                'userType': loggedInUserType,
                                 'email': emailController.value.text,
                               },
                             );
-                          }
+                          } else if (value == 'Edit properties') {}
                         },
                         itemBuilder:
                             (context) => [
-                              PopupMenuItem<String>(
-                                value: 'Payment Method',
-                                child: Text('Payment Method'),
-                              ),
+                              if (loggedInUserType.toLowerCase() == 'renter')
+                                PopupMenuItem<String>(
+                                  value: 'Payment Method',
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.credit_card,
+                                        color: Colors.orangeAccent,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text('Payment Method'),
+                                    ],
+                                  ),
+                                )
+                              else if (loggedInUserType.toLowerCase() ==
+                                  'agent')
+                                PopupMenuItem<String>(
+                                  value: 'Edit Properties',
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.home_work,
+                                        color: Colors.orangeAccent,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text('Edit Properties'),
+                                    ],
+                                  ),
+                                ),
+                              const PopupMenuDivider(),
                               PopupMenuItem<String>(
                                 value: 'logout',
-                                child: Text('Logout'),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.logout,
+                                      color: Colors.orangeAccent,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text('Logout'),
+                                  ],
+                                ),
                               ),
                             ],
                         child: CircleAvatar(
@@ -756,14 +823,6 @@ class _RealestatelandingState extends State<Realestatelanding> {
                       return ClipRRect(
                         borderRadius: BorderRadius.circular(12),
                         child: GridTile(
-                          footer: Text(
-                            'Property ${index + 1}',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
                           child: Image.asset(
                             'assets/images/property${index + 1}.jpg',
 
@@ -784,6 +843,307 @@ class _RealestatelandingState extends State<Realestatelanding> {
                 ),
               ),
               SliverToBoxAdapter(child: SizedBox(height: 100)),
+
+              if (isLoggedIn && loggedInUserType.toLowerCase() == 'renter') ...[
+                SliverToBoxAdapter(
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 16,
+                    ),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.all(Radius.circular(8)),
+                      gradient: LinearGradient(
+                        begin: Alignment.topRight,
+                        end: Alignment.bottomLeft,
+                        colors: [
+                          const Color(0xFF0D0D0D),
+                          const Color(0xFF0D0D0D),
+                          const Color.fromARGB(
+                            255,
+                            128,
+                            42,
+                            11,
+                          ).withOpacity(0.05),
+                          const Color.fromARGB(
+                            255,
+                            255,
+                            161,
+                            126,
+                          ).withOpacity(0.1),
+                        ],
+                      ),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(16),
+                      child: Container(
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.house_rounded,
+                                  color: Colors.white,
+                                  size: 32,
+                                ),
+                                const SizedBox(width: 12),
+                                Text(
+                                  'Find Your Dream Home',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold,
+                                    shadows: [
+                                      Shadow(
+                                        color: Colors.black.withOpacity(0.3),
+                                        offset: const Offset(0, 2),
+                                        blurRadius: 4,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              'As a renter, you have access to our exclusive property listings. Browse available homes, apartments, and commercial spaces tailored to your preferences.',
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.9),
+                                fontSize: 16,
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+                            Center(
+                              child: ElevatedButton.icon(
+                                onPressed: () {
+                                  Navigator.pushNamed(
+                                    context,
+                                    '/propertyType',
+                                    arguments: {
+                                      'email': emailController.value.text,
+                                    },
+                                  );
+                                },
+                                icon: Icon(Icons.search, color: Colors.black),
+                                label: Text(
+                                  'View Available Properties',
+                                  style: TextStyle(
+                                    color: Colors.black,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.white,
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 24,
+                                    vertical: 16,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                SliverToBoxAdapter(child: SizedBox(height: 40)),
+              ] else if (isLoggedIn &&
+                  loggedInUserType.toLowerCase() == 'agent') ...[
+                SliverToBoxAdapter(
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 16,
+                    ),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.all(Radius.circular(8)),
+                      gradient: LinearGradient(
+                        begin: Alignment.topRight,
+                        end: Alignment.bottomLeft,
+                        colors: [
+                          const Color(0xFF0D0D0D),
+                          const Color(0xFF0D0D0D),
+                          const Color.fromARGB(
+                            255,
+                            128,
+                            42,
+                            11,
+                          ).withOpacity(0.05),
+                          const Color.fromARGB(
+                            255,
+                            255,
+                            161,
+                            126,
+                          ).withOpacity(0.1),
+                        ],
+                      ),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(16),
+                      child: Container(
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.home_work,
+                                  color: Colors.white,
+                                  size: 32,
+                                ),
+                                const SizedBox(width: 12),
+                                Text(
+                                  'Manage Your Listings',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold,
+                                    shadows: [
+                                      Shadow(
+                                        color: Colors.black.withOpacity(0.3),
+                                        offset: const Offset(0, 2),
+                                        blurRadius: 4,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              'Welcome back, agent! Manage your property listings, update details, add new properties, and respond to inquiries from interested renters. Your portfolio is just a click away.',
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.9),
+                                fontSize: 16,
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Expanded(
+                                  child: ElevatedButton.icon(
+                                    onPressed: () {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            'Edit properties coming soon!',
+                                          ),
+                                          behavior: SnackBarBehavior.floating,
+                                        ),
+                                      );
+                                    },
+                                    icon: Icon(Icons.edit, color: Colors.black),
+                                    label: Text(
+                                      'Edit Properties',
+                                      style: TextStyle(
+                                        color: Colors.black,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.white,
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: 16,
+                                        vertical: 16,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: ElevatedButton.icon(
+                                    onPressed: () {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            'Add new property feature coming soon!',
+                                          ),
+                                          behavior: SnackBarBehavior.floating,
+                                        ),
+                                      );
+                                    },
+                                    icon: Icon(
+                                      Icons.add_home,
+                                      color: Colors.black,
+                                    ),
+                                    label: Text(
+                                      'Add New Property',
+                                      style: TextStyle(
+                                        color: Colors.black,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.white,
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: 16,
+                                        vertical: 16,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+
+                            const SizedBox(height: 16),
+                            Container(
+                              padding: EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.2),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceAround,
+                                children: [
+                                  _builtItem(
+                                    'Active Listings',
+                                    '5',
+                                    Icons.home,
+                                  ),
+                                  _builtItem(
+                                    'New Inquiries',
+                                    '12',
+                                    Icons.message,
+                                  ),
+                                  _builtItem(
+                                    'Views This Week',
+                                    '438',
+                                    Icons.visibility,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                SliverToBoxAdapter(child: SizedBox(height: 40)),
+              ],
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
@@ -820,6 +1180,7 @@ class _RealestatelandingState extends State<Realestatelanding> {
                               borderRadius: BorderRadius.circular(2),
                             ),
                           ),
+
                           const SizedBox(height: 16),
                           Text(
                             'About Homify',
@@ -832,26 +1193,33 @@ class _RealestatelandingState extends State<Realestatelanding> {
                             textAlign: TextAlign.center,
                           ),
                           const SizedBox(height: 16),
+
+                          Text(
+                            "Homify is a modern real estate platform crafted to bridge the gap between renters and property agents. Whether you're searching for an apartment, a house, a vacation home, or commercial space, Homify makes the process seamless, secure, and efficient. With personalized listings, agent-renter communication, and integrated payment support, Homify brings together trust, technology, and transparency to simplify your property journey.Your next home is just a few clicks away—experience the future of renting with Homify.",
+                            style: TextStyle(
+                              color: themeData.colorScheme.onSurface,
+                            ),
+                          ),
                           const SizedBox(height: 24),
                           Wrap(
                             spacing: 16,
                             runSpacing: 16,
                             alignment: WrapAlignment.center,
                             children: [
-                              _buildAboutStatCard(
+                              _aboutCard(
                                 Icons.house,
-                                '500+ Properties',
-                                'Premium locations',
+                                '15+ Listings',
+                                'Curated sample data',
                               ),
-                              _buildAboutStatCard(
+                              _aboutCard(
                                 Icons.people,
-                                '300+ Clients',
-                                'Trusted worldwide',
+                                '10+ Test Users',
+                                'Student research-based',
                               ),
-                              _buildAboutStatCard(
+                              _aboutCard(
                                 Icons.star,
-                                'Top Agents',
-                                'Local experts',
+                                'Built by Students',
+                                'Academic project',
                               ),
                             ],
                           ),

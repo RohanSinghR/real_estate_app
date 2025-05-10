@@ -53,7 +53,7 @@ CREATE TABLE Agent(
 CREATE TABLE property(  
     price INT NOT NULL,  
     property_id INT NOT NULL,  
-    type INT NOT NULL,  
+    type VARCHAR(25) CHECK(type in ('House','Commercial_buildings','Vacation_homes','Land','Apartment')) NOT NULL,  
     availability DATE NOT NULL,  
     description VARCHAR(500) NOT NULL,  
     city VARCHAR(100) NOT NULL,  
