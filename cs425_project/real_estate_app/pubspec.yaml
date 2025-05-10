@@ -37,6 +37,7 @@ dependencies:
   url_strategy: ^0.3.0
   carousel_slider: ^5.0.0
   http: ^1.4.0
+  crypto: ^3.0.6
 
 dev_dependencies:
   flutter_test:

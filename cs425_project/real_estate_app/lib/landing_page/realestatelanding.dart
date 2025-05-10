@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:real_estate_app/landing_page/settings/paymentspage.dart';
 import 'package:real_estate_app/theme/theme.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 
@@ -103,8 +104,9 @@ class _RealestatelandingState extends State<Realestatelanding> {
   }
 
   void _showLoginDialog(BuildContext context) {
-    final TextEditingController emailcontroller = TextEditingController();
-    final TextEditingController passwordcontroller = TextEditingController();
+    emailController.clear();
+    passwordcontroller.clear();
+
     MediaQueryData mediaQueryData = MediaQuery.of(context);
     showDialog(
       context: context,
@@ -143,7 +145,7 @@ class _RealestatelandingState extends State<Realestatelanding> {
                 ),
                 const SizedBox(height: 24),
                 TextField(
-                  controller: emailcontroller,
+                  controller: emailController,
                   style: const TextStyle(color: Colors.white),
                   decoration: InputDecoration(
                     hintText: 'Email',
@@ -195,8 +197,8 @@ class _RealestatelandingState extends State<Realestatelanding> {
                       ),
                     ),
                     onPressed: () {
-                      login(context);
                       Navigator.of(dialogContext).pop();
+                      login(context);
                     },
                     child: Text('Login'),
                   ),
@@ -224,19 +226,21 @@ class _RealestatelandingState extends State<Realestatelanding> {
         url,
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
-          'email': emailController.text,
-          'password_hash': passwordcontroller.text,
+          'email': emailController.text.trim(),
+          'password_hash': passwordcontroller.text.trim(),
         }),
       );
 
-      print('Login response: ${response.body}');
+      print('Login response status: ${response.statusCode}');
+      print('Login response body: ${response.body}');
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         final user = data['user'];
+
         setState(() {
           isLoggedIn = true;
-          loggedInUserName = user['name']; // from API response
+          loggedInUserName = user['name'];
         });
 
         ScaffoldMessenger.of(
@@ -372,8 +376,6 @@ class _RealestatelandingState extends State<Realestatelanding> {
                         onChanged: (value) => setState(() => userType = value!),
                       ),
                       const SizedBox(height: 12),
-
-                      // Agent Fields
                       if (userType == 'Agent') ...[
                         TextField(
                           style: TextStyle(color: Colors.white),
@@ -392,9 +394,7 @@ class _RealestatelandingState extends State<Realestatelanding> {
                           controller: contactController,
                           decoration: _inputDecoration('Phone Number'),
                         ),
-                      ]
-                      // Renter (User) Fields
-                      else ...[
+                      ] else ...[
                         TextField(
                           style: TextStyle(color: Colors.white),
                           controller: locationController,
@@ -533,56 +533,74 @@ class _RealestatelandingState extends State<Realestatelanding> {
 
   Future<void> signup(BuildContext context) async {
     final url = Uri.parse('http://localhost:3000/api/signup');
-
-    final expiryDate = '$selectedYear-$selectedMonth-01';
+    final String normalizedUserType = userType.toLowerCase();
 
     final Map<String, dynamic> payload = {
       'name': namecontroller.text.trim(),
       'email': emailController.text.trim(),
       'address': addressController.text.trim(),
       'password_hash': passwordcontroller.text.trim(),
-      'user_type': userType,
-      'contact_info': contactController.text.trim(),
-      'credit_card_number': creditCardNumberController.text.trim(),
-      'credit_card_cvv': creditCardCVVController.text.trim(),
-      'credit_card_billing_address': creditCardBillingController.text.trim(),
-      'credit_card_expiry': expiryDate,
+      'user_type': normalizedUserType,
     };
 
-    if (userType == 'Agent') {
+    if (normalizedUserType == 'agent') {
       payload.addAll({
         'job_title': jobTitleController.text.trim(),
         'agency': agencyController.text.trim(),
+        'contact_info': contactController.text.trim(),
       });
-    } else {
-      payload.addAll({'preferred_location': locationController.text.trim()});
+    } else if (normalizedUserType == 'renter') {
+      final expiryDate = '$selectedYear-$selectedMonth-01';
+      payload.addAll({
+        'preferred_location': locationController.text.trim(),
+        'credit_card_number': creditCardNumberController.text.trim(),
+        'credit_card_cvv': creditCardCVVController.text.trim(),
+        'credit_card_billing_address': creditCardBillingController.text.trim(),
+        'credit_card_expiry': expiryDate,
+      });
     }
 
     try {
+      print('Sending signup request with payload: $payload');
+
       final response = await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(payload),
       );
 
+      print('Signup response status: ${response.statusCode}');
+      print('Signup response body: ${response.body}');
+
       if (response.statusCode == 200) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Sign up successful!')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Sign up successful! Please login.')),
+        );
+
+        namecontroller.clear();
+        emailController.clear();
+        addressController.clear();
+        passwordcontroller.clear();
+        jobTitleController.clear();
+        agencyController.clear();
+        contactController.clear();
+        locationController.clear();
+        creditCardNumberController.clear();
+        creditCardCVVController.clear();
+        creditCardBillingController.clear();
+
         Navigator.pop(context);
         _showLoginDialog(context);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Signup failed: ${response.body}')),
         );
-        print('Status Code: ${response.statusCode}');
-        print('Response Body: ${response.body}');
       }
     } catch (e) {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Error occurred: $e')));
-      print('Exception: $e');
+      print('Exception during signup: $e');
     }
   }
 
@@ -655,10 +673,23 @@ class _RealestatelandingState extends State<Realestatelanding> {
                               isLoggedIn = false;
                               loggedInUserName = '';
                             });
+                          } else if (value == 'Payment Method') {
+                            Navigator.pushNamed(
+                              context,
+                              '/payments',
+                              arguments: {
+                                'isRenter': true,
+                                'email': emailController.value.text,
+                              },
+                            );
                           }
                         },
                         itemBuilder:
                             (context) => [
+                              PopupMenuItem<String>(
+                                value: 'Payment Method',
+                                child: Text('Payment Method'),
+                              ),
                               PopupMenuItem<String>(
                                 value: 'logout',
                                 child: Text('Logout'),

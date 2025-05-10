@@ -8,11 +8,11 @@ CREATE TABLE Users(
 );
 
 CREATE TABLE Credit_Card(
-    card_number INT NOT NULL,  
+    card_number VARCHAR(100) NOT NULL,  
     cvv INT NOT NULL,  
     billing_address VARCHAR(200) NOT NULL,  
-    expiry_date DATE NOT NULL,  email 
-    VARCHAR(100) NOT NULL,  
+    expiry_date DATE NOT NULL,  
+    email VARCHAR(100) NOT NULL,  
     PRIMARY KEY (card_number),  
     FOREIGN KEY (email) REFERENCES Users(email) on delete cascade
 );
@@ -23,7 +23,7 @@ CREATE TABLE Address(
     city VARCHAR(100) NOT NULL,  
     street VARCHAR(100) NOT NULL,  
     address_id INT NOT NULL,  
-    card_number INT NOT NULL,  
+    card_number VARCHAR(100) NOT NULL,  
     PRIMARY KEY (address_id),  
     FOREIGN KEY (card_number) REFERENCES Credit_Card(card_number) on delete cascade
 );
@@ -35,7 +35,6 @@ CREATE TABLE neighborhood(
     PRIMARY KEY (neighborhood_id)
 );
 CREATE TABLE Renter(  
-    renter_details INT NOT NULL,  
     preferred_location VARCHAR(100) NOT NULL,  
     reward_points INT,  
     email VARCHAR(100) NOT NULL,  
@@ -43,7 +42,7 @@ CREATE TABLE Renter(
     FOREIGN KEY (email) REFERENCES Users(email));
 
 CREATE TABLE Agent(  
-    phone_num INT NOT NULL,  
+    phone_num VARCHAR(15) NOT NULL,  
     Job_role VARCHAR(100) NOT NULL,  
     Agency VARCHAR(100) NOT NULL,  
     email VARCHAR(100) NOT NULL,  
@@ -112,7 +111,7 @@ CREATE TABLE Booking(
     date DATE NOT NULL,  
     property_id INT NOT NULL,  
     email VARCHAR(100) NOT NULL,  
-    card_number INT NOT NULL,  
+    card_number VARCHAR(100) NOT NULL,  
     PRIMARY KEY (booking_id),  
     FOREIGN KEY (property_id) REFERENCES property(property_id),  
     FOREIGN KEY (email) REFERENCES Renter(email),  
