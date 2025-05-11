@@ -2,7 +2,8 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class ApiService {
-  static const String baseUrl = 'http://localhost:3000';
+  static const String baseUrl =
+      'https://real-estate-app-backend-o7gz.onrender.com';
 
   static Future<String> signup({
     required String name,
@@ -12,7 +13,7 @@ class ApiService {
   }) async {
     try {
       final response = await http.post(
-        Uri.parse('http://localhost:3000/api/signup'),
+        Uri.parse('$baseUrl/api/signup'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'name': 'Jane Doe',
