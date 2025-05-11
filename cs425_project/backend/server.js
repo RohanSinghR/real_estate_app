@@ -7,6 +7,9 @@ const propertyRoutes = require('./routes/properties');
 const bookingRoutes = require('./routes/booking');
 const renterRoutes = require('./routes/renter');
 const app = express();
+app.get('/', (req, res) => {
+  res.send('Backend is running successfully on Render!');
+});
 app.use(cors());
 app.use(bodyParser.json());
 app.use('/api', authRoutes);
