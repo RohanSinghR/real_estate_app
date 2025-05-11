@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:real_estate_app/landing_page/realestatelanding.dart';
 import 'package:real_estate_app/landing_page/settings/paymentspage.dart';
-import 'package:real_estate_app/property_pages/property_type_page.dart';
+import 'package:real_estate_app/property_screen/agent_properties.dart';
+import 'package:real_estate_app/property_screen/property_screen.dart';
 import 'package:url_strategy/url_strategy.dart';
 
 void main() {
@@ -26,13 +27,21 @@ class RealEstateMain extends StatelessWidget {
                   email: args['email'],
                 ),
           );
-        } else if (settings.name == '/propertyType') {
-          return MaterialPageRoute(builder: (context) => PropertyTypePage());
+        } else if (settings.name == '/propertyscreen') {
+          final args1 = settings.arguments as Map<String, dynamic>;
+          return MaterialPageRoute(
+            builder: (context) => PropertiesScreen(email: args1['email']),
+          );
+        } else if (settings.name == '/agent_properties') {
+          final args1 = settings.arguments as Map<String, dynamic>;
+          return MaterialPageRoute(
+            builder: (context) => AgentPropertiesScreen(email: args1['email']),
+          );
         }
-
         return MaterialPageRoute(builder: (_) => const Realestatelanding());
       },
       initialRoute: '/',
+
       theme: ThemeData(useMaterial3: true),
     );
   }

@@ -13,13 +13,11 @@ router.get('/cards', (req, res) => {
   console.log('Fetching cards for email:', email);
   const query = 'SELECT * FROM Credit_Card WHERE email = ?';
   console.log('Running query:', query, 'with params:', [email]);
-  
   db.query(query, [email], (err, results) => {
     if (err) {
       console.error('Database error when fetching cards:', err);
       return res.status(500).json({ error: 'Failed to fetch payment methods', details: err.message });
     }
-    
     console.log(`Found ${results.length} cards for ${email}`);
     const formattedResults = results.map(card => {
       if (card.expiry_date instanceof Date) {
@@ -27,7 +25,6 @@ router.get('/cards', (req, res) => {
       }
       return card;
     });
-    
     console.log('Returning formatted cards:', formattedResults);
     return res.status(200).json(formattedResults);
   });
@@ -71,7 +68,6 @@ router.post('/cards', (req, res) => {
           console.error('Database error when inserting card:', insertErr);
           return res.status(500).json({ error: 'Failed to add payment method', details: insertErr.message });
         }
-        
         console.log('Card added successfully for', email, 'Result:', result);
         return res.status(200).json({ message: 'Payment method added successfully' });
       });
@@ -80,27 +76,21 @@ router.post('/cards', (req, res) => {
 });
 router.put('/cards', (req, res) => {
   const { card_number, billing_address } = req.body;
-  
   if (!card_number || !billing_address) {
     return res.status(400).json({ error: 'Card number and billing address are required' });
   }
-  
   console.log('Updating card:', { card_number, billing_address });
-  
   const updateQuery = 'UPDATE Credit_Card SET billing_address = ? WHERE card_number = ?';
   console.log('Running update query:', updateQuery, 'with params:', [billing_address, card_number]);
-  
   db.query(updateQuery, [billing_address, card_number], (err, result) => {
     if (err) {
       console.error('Database error when updating card:', err);
       return res.status(500).json({ error: 'Failed to update payment method', details: err.message });
     }
-    
     console.log('Update result:', result);
     if (result.affectedRows === 0) {
       return res.status(404).json({ error: 'Card not found' });
     }
-    
     console.log('Card updated successfully:', card_number);
     return res.status(200).json({ message: 'Payment method updated successfully' });
   });

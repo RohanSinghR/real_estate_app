@@ -766,13 +766,10 @@ class _PaymentsPageState extends State<PaymentsPage> {
         body: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              begin: Alignment.topRight,
-              end: Alignment.bottomLeft,
               colors: [
-                const Color(0xFF0D0D0D),
-                const Color(0xFF0D0D0D),
-                const Color.fromARGB(255, 255, 161, 126).withOpacity(0.05),
-                const Color.fromARGB(255, 255, 161, 126).withOpacity(0.1),
+                const Color.fromARGB(255, 73, 21, 0),
+                Colors.black,
+                const Color.fromARGB(255, 73, 21, 0),
               ],
             ),
           ),
@@ -783,12 +780,7 @@ class _PaymentsPageState extends State<PaymentsPage> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         CircularProgressIndicator(
-                          color: const Color.fromARGB(
-                            255,
-                            255,
-                            161,
-                            126,
-                          ), // sunset orange
+                          color: const Color.fromARGB(255, 255, 161, 126),
                         ),
                         const SizedBox(height: 16),
                         const Text(
@@ -804,7 +796,7 @@ class _PaymentsPageState extends State<PaymentsPage> {
                       padding: const EdgeInsets.all(32),
                       margin: const EdgeInsets.all(24),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF2C2C2C), // charcoal gray
+                        color: const Color(0xFF2C2C2C),
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
@@ -858,9 +850,7 @@ class _PaymentsPageState extends State<PaymentsPage> {
                             icon: const Icon(Icons.refresh),
                             label: const Text('Try Again'),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(
-                                0xFFFFB27E,
-                              ), // lighter orange from theme.dart
+                              backgroundColor: const Color(0xFFFFB27E),
                               foregroundColor: Colors.black,
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 24,
@@ -886,7 +876,7 @@ class _PaymentsPageState extends State<PaymentsPage> {
                       padding: const EdgeInsets.all(32),
                       margin: const EdgeInsets.all(24),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF2C2C2C), // charcoal gray
+                        color: const Color(0xFF2C2C2C),
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
@@ -950,9 +940,7 @@ class _PaymentsPageState extends State<PaymentsPage> {
                             icon: const Icon(Icons.add),
                             label: const Text('Add Payment Method'),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(
-                                0xFFFFB27E,
-                              ), // lighter orange from theme.dart
+                              backgroundColor: const Color(0xFFFFB27E),
                               foregroundColor: Colors.black,
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 24,
@@ -980,7 +968,6 @@ class _PaymentsPageState extends State<PaymentsPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Header with decorative element
                         Padding(
                           padding: const EdgeInsets.only(
                             top: 16,
@@ -1024,17 +1011,12 @@ class _PaymentsPageState extends State<PaymentsPage> {
                                 margin: const EdgeInsets.only(bottom: 16),
                                 child: Stack(
                                   children: [
-                                    // Card background with gradient
                                     Container(
                                       decoration: BoxDecoration(
                                         gradient: LinearGradient(
                                           colors: [
-                                            const Color(
-                                              0xFF2C2C2C,
-                                            ), // charcoal gray
-                                            const Color(
-                                              0xFF232323,
-                                            ), // slightly darker
+                                            const Color(0xFF2C2C2C),
+                                            const Color(0xFF232323),
                                           ],
                                           begin: Alignment.topLeft,
                                           end: Alignment.bottomRight,
@@ -1058,13 +1040,11 @@ class _PaymentsPageState extends State<PaymentsPage> {
                                             crossAxisAlignment:
                                                 CrossAxisAlignment.start,
                                             children: [
-                                              // Card top section
                                               Row(
                                                 mainAxisAlignment:
                                                     MainAxisAlignment
                                                         .spaceBetween,
                                                 children: [
-                                                  // Card type icon
                                                   Container(
                                                     padding:
                                                         const EdgeInsets.all(
@@ -1094,16 +1074,13 @@ class _PaymentsPageState extends State<PaymentsPage> {
                                                       size: 24,
                                                     ),
                                                   ),
-                                                  // Chip icon
                                                   Container(
                                                     padding:
                                                         const EdgeInsets.all(8),
                                                     decoration: BoxDecoration(
                                                       color: const Color(
                                                         0xFFFFC36B,
-                                                      ).withOpacity(
-                                                        0.2,
-                                                      ), // soft golden light
+                                                      ).withOpacity(0.2),
                                                       borderRadius:
                                                           BorderRadius.circular(
                                                             8,
@@ -1111,9 +1088,7 @@ class _PaymentsPageState extends State<PaymentsPage> {
                                                     ),
                                                     child: const Icon(
                                                       Icons.memory,
-                                                      color: Color(
-                                                        0xFFFFC36B,
-                                                      ), // soft golden light
+                                                      color: Color(0xFFFFC36B),
                                                       size: 20,
                                                     ),
                                                   ),
@@ -1121,8 +1096,6 @@ class _PaymentsPageState extends State<PaymentsPage> {
                                               ),
 
                                               const SizedBox(height: 16),
-
-                                              // Card number
                                               Text(
                                                 '**** **** **** ${card['last4']}',
                                                 style: const TextStyle(
@@ -1134,14 +1107,11 @@ class _PaymentsPageState extends State<PaymentsPage> {
                                               ),
 
                                               const SizedBox(height: 20),
-
-                                              // Card details row
                                               Row(
                                                 mainAxisAlignment:
                                                     MainAxisAlignment
                                                         .spaceBetween,
                                                 children: [
-                                                  // Expiry date
                                                   Column(
                                                     crossAxisAlignment:
                                                         CrossAxisAlignment
@@ -1167,8 +1137,6 @@ class _PaymentsPageState extends State<PaymentsPage> {
                                                       ),
                                                     ],
                                                   ),
-
-                                                  // Card holder
                                                   Column(
                                                     crossAxisAlignment:
                                                         CrossAxisAlignment
@@ -1194,11 +1162,8 @@ class _PaymentsPageState extends State<PaymentsPage> {
                                                       ),
                                                     ],
                                                   ),
-
-                                                  // Action buttons
                                                   Row(
                                                     children: [
-                                                      // Edit button
                                                       Material(
                                                         color:
                                                             Colors.transparent,
@@ -1248,8 +1213,6 @@ class _PaymentsPageState extends State<PaymentsPage> {
                                                       ),
 
                                                       const SizedBox(width: 8),
-
-                                                      // Delete button
                                                       Material(
                                                         color:
                                                             Colors.transparent,
@@ -1312,7 +1275,7 @@ class _PaymentsPageState extends State<PaymentsPage> {
                                                                         },
                                                                         style: ElevatedButton.styleFrom(
                                                                           backgroundColor:
-                                                                              Colors.red, // error color
+                                                                              Colors.red,
                                                                           foregroundColor:
                                                                               Colors.white,
                                                                           shape: RoundedRectangleBorder(
@@ -1367,8 +1330,6 @@ class _PaymentsPageState extends State<PaymentsPage> {
                                               ),
 
                                               const SizedBox(height: 16),
-
-                                              // Billing address section
                                               Column(
                                                 crossAxisAlignment:
                                                     CrossAxisAlignment.start,
@@ -1421,7 +1382,6 @@ class _PaymentsPageState extends State<PaymentsPage> {
                                       ),
                                     ),
 
-                                    // Decorative accent line on top
                                     Positioned(
                                       top: 0,
                                       left: 24,

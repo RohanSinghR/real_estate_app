@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:real_estate_app/property_screen/agent_properties.dart';
+import 'package:real_estate_app/property_screen/property_screen.dart';
 import 'package:real_estate_app/theme/theme.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 
@@ -267,19 +269,37 @@ class _RealestatelandingState extends State<Realestatelanding> {
           loggedInUserType = user['user_type'] ?? '';
         });
 
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Welcome, ${user['name']}!')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Welcome, ${user['name']}!'),
+            backgroundColor: Colors.green[800],
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.all(Radius.circular(8)),
+            ),
+          ),
+        );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Login failed: ${response.body}')),
+          SnackBar(
+            content: Text('Login failed: ${response.body}'),
+            backgroundColor: Colors.red[800],
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.all(Radius.circular(8)),
+            ),
+          ),
         );
       }
     } catch (e) {
       print('Login error: $e');
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Login error: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Login error: $e'),
+          backgroundColor: Colors.red[800],
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.circular(8)),
+          ),
+        ),
+      );
     }
   }
 
@@ -607,7 +627,13 @@ class _RealestatelandingState extends State<Realestatelanding> {
 
       if (response.statusCode == 200) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Sign up successful! Please login.')),
+          SnackBar(
+            content: Text('Sign up successful! Please login.'),
+            backgroundColor: Colors.green[800],
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.all(Radius.circular(8)),
+            ),
+          ),
         );
 
         namecontroller.clear();
@@ -625,13 +651,25 @@ class _RealestatelandingState extends State<Realestatelanding> {
         Navigator.pop(context);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Signup failed: ${response.body}')),
+          SnackBar(
+            content: Text('Signup failed: ${response.body}'),
+            backgroundColor: Colors.red[800],
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.all(Radius.circular(8)),
+            ),
+          ),
         );
       }
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error occurred: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error occurred: $e'),
+          backgroundColor: Colors.red[800],
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.circular(8)),
+          ),
+        ),
+      );
       print('Exception during signup: $e');
     }
   }
@@ -714,7 +752,13 @@ class _RealestatelandingState extends State<Realestatelanding> {
                                 'email': emailController.value.text,
                               },
                             );
-                          } else if (value == 'Edit properties') {}
+                          } else if (value == 'Edit Properties') {
+                            Navigator.pushNamed(
+                              context,
+                              '/agent_properties',
+                              arguments: {'email': emailController.value.text},
+                            );
+                          }
                         },
                         itemBuilder:
                             (context) => [
@@ -780,38 +824,38 @@ class _RealestatelandingState extends State<Realestatelanding> {
                 ],
               ),
               SliverToBoxAdapter(child: SizedBox(height: 100)),
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24.0,
-                    vertical: 16.0,
-                  ),
-                  child: Container(
-                    width: mediaQueryData.size.width / 3,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.9),
-                      borderRadius: BorderRadius.circular(50),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
-                          blurRadius: 10,
-                          offset: Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: TextField(
-                      decoration: InputDecoration(
-                        hintText:
-                            'Search by city, neighborhood, or property type',
-                        prefixIcon: Icon(Icons.search, color: Colors.grey[700]),
-                        border: InputBorder.none,
-                        contentPadding: EdgeInsets.symmetric(vertical: 16),
-                      ),
-                      style: TextStyle(fontSize: 16),
-                    ),
-                  ),
-                ),
-              ),
+              // SliverToBoxAdapter(
+              //   child: Padding(
+              //     padding: const EdgeInsets.symmetric(
+              //       horizontal: 24.0,
+              //       vertical: 16.0,
+              //     ),
+              //     child: Container(
+              //       width: mediaQueryData.size.width / 3,
+              //       decoration: BoxDecoration(
+              //         color: Colors.white.withOpacity(0.9),
+              //         borderRadius: BorderRadius.circular(50),
+              //         boxShadow: [
+              //           BoxShadow(
+              //             color: Colors.black.withOpacity(0.1),
+              //             blurRadius: 10,
+              //             offset: Offset(0, 4),
+              //           ),
+              //         ],
+              //       ),
+              //       child: TextField(
+              //         decoration: InputDecoration(
+              //           hintText:
+              //               'Search by city, neighborhood, or property type',
+              //           prefixIcon: Icon(Icons.search, color: Colors.grey[700]),
+              //           border: InputBorder.none,
+              //           contentPadding: EdgeInsets.symmetric(vertical: 16),
+              //         ),
+              //         style: TextStyle(fontSize: 16),
+              //       ),
+              //     ),
+              //   ),
+              // ),
               SliverToBoxAdapter(child: SizedBox(height: 100)),
               SliverToBoxAdapter(
                 child: Padding(
@@ -915,37 +959,85 @@ class _RealestatelandingState extends State<Realestatelanding> {
                               ),
                             ),
                             const SizedBox(height: 24),
-                            Center(
-                              child: ElevatedButton.icon(
-                                onPressed: () {
-                                  Navigator.pushNamed(
-                                    context,
-                                    '/propertyType',
-                                    arguments: {
-                                      'email': emailController.value.text,
-                                    },
-                                  );
-                                },
-                                icon: Icon(Icons.search, color: Colors.black),
-                                label: Text(
-                                  'View Available Properties',
-                                  style: TextStyle(
-                                    color: Colors.black,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceAround,
+                              children: [
+                                ElevatedButton.icon(
+                                  onPressed: () {
+                                    // Navigator.pushNamed(
+                                    //   context,
+                                    //   '/propertyType',
+                                    //   arguments: {
+                                    //     'email': emailController.value.text,
+                                    //   },
+                                    // );
+                                    Navigator.pushNamed(
+                                      context,
+                                      '/payments',
+                                      arguments: {
+                                        'userType': loggedInUserType,
+                                        'email': emailController.value.text,
+                                      },
+                                    );
+                                  },
+                                  icon: Icon(Icons.wallet, color: Colors.black),
+                                  label: Text(
+                                    'View Payment Methods',
+                                    style: TextStyle(
+                                      color: Colors.black,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.white,
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 24,
+                                      vertical: 16,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
                                   ),
                                 ),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.white,
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: 24,
-                                    vertical: 16,
+                                ElevatedButton.icon(
+                                  onPressed: () {
+                                    // Navigator.pushNamed(
+                                    //   context,
+                                    //   '/propertyType',
+                                    //   arguments: {
+                                    //     'email': emailController.value.text,
+                                    //   },
+                                    // );
+                                    Navigator.pushNamed(
+                                      context,
+                                      '/propertyscreen',
+                                      arguments: {
+                                        'email': emailController.value.text,
+                                      },
+                                    );
+                                  },
+                                  icon: Icon(Icons.search, color: Colors.black),
+                                  label: Text(
+                                    'View Available Properties',
+                                    style: TextStyle(
+                                      color: Colors.black,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                    ),
                                   ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.white,
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 24,
+                                      vertical: 16,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
                                   ),
                                 ),
-                              ),
+                              ],
                             ),
                           ],
                         ),
@@ -1032,60 +1124,17 @@ class _RealestatelandingState extends State<Realestatelanding> {
                                 Expanded(
                                   child: ElevatedButton.icon(
                                     onPressed: () {
-                                      ScaffoldMessenger.of(
+                                      Navigator.pushNamed(
                                         context,
-                                      ).showSnackBar(
-                                        SnackBar(
-                                          content: Text(
-                                            'Edit properties coming soon!',
-                                          ),
-                                          behavior: SnackBarBehavior.floating,
-                                        ),
+                                        '/agent_properties',
+                                        arguments: {
+                                          'email': emailController.value.text,
+                                        },
                                       );
                                     },
                                     icon: Icon(Icons.edit, color: Colors.black),
                                     label: Text(
                                       'Edit Properties',
-                                      style: TextStyle(
-                                        color: Colors.black,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 16,
-                                      ),
-                                    ),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.white,
-                                      padding: EdgeInsets.symmetric(
-                                        horizontal: 16,
-                                        vertical: 16,
-                                      ),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-
-                                const SizedBox(width: 16),
-                                Expanded(
-                                  child: ElevatedButton.icon(
-                                    onPressed: () {
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).showSnackBar(
-                                        SnackBar(
-                                          content: Text(
-                                            'Add new property feature coming soon!',
-                                          ),
-                                          behavior: SnackBarBehavior.floating,
-                                        ),
-                                      );
-                                    },
-                                    icon: Icon(
-                                      Icons.add_home,
-                                      color: Colors.black,
-                                    ),
-                                    label: Text(
-                                      'Add New Property',
                                       style: TextStyle(
                                         color: Colors.black,
                                         fontWeight: FontWeight.bold,
@@ -1284,7 +1333,7 @@ class _RealestatelandingState extends State<Realestatelanding> {
                           Icon(Icons.email, color: Colors.orangeAccent),
                           const SizedBox(width: 8),
                           Text(
-                            'contact@homify.com',
+                            'contac123t@homify.com',
                             style: TextStyle(
                               color: Colors.white70,
                               fontSize: 14,
@@ -1299,7 +1348,7 @@ class _RealestatelandingState extends State<Realestatelanding> {
                           Icon(Icons.phone, color: Colors.orangeAccent),
                           const SizedBox(width: 8),
                           Text(
-                            '+1 234 567 8900',
+                            '+1 234 567 8901',
                             style: TextStyle(
                               color: Colors.white70,
                               fontSize: 14,
@@ -1319,10 +1368,6 @@ class _RealestatelandingState extends State<Realestatelanding> {
                         ],
                       ),
                       const SizedBox(height: 30),
-                      Text(
-                        '© 2025 Homify. All rights reserved.',
-                        style: TextStyle(color: Colors.white54, fontSize: 12),
-                      ),
                     ],
                   ),
                 ),
